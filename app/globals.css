@@ -1,0 +1,135 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 217 91% 60%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 222 47% 11%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 217 91% 60%;
+    --radius: 0.75rem;
+  }
+}
+
+@layer base {
+  * { @apply border-border; }
+  html, body { @apply bg-background text-foreground; }
+  html { scroll-behavior: smooth; }
+}
+
+@layer utilities {
+  .font-serif { font-family: var(--font-serif), Georgia, 'Times New Roman', serif; }
+  .font-sans { font-family: var(--font-inter), ui-sans-serif, system-ui, -apple-system, sans-serif; }
+
+  /* Light-theme glass card */
+  .glass-light {
+    background: rgba(255,255,255,0.72);
+    backdrop-filter: blur(18px) saturate(1.2);
+    -webkit-backdrop-filter: blur(18px) saturate(1.2);
+    border: 1px solid rgba(15, 23, 42, 0.06);
+    box-shadow: 0 1px 2px rgba(15,23,42,0.04), 0 8px 24px -12px rgba(15,23,42,0.08);
+  }
+
+  .glass-strong {
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(24px) saturate(1.4);
+    -webkit-backdrop-filter: blur(24px) saturate(1.4);
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    box-shadow: 0 4px 16px -4px rgba(15,23,42,0.08), 0 20px 40px -20px rgba(15,23,42,0.12);
+  }
+
+  .subtle-grid {
+    background-image:
+      linear-gradient(rgba(37,99,235,0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(37,99,235,0.05) 1px, transparent 1px);
+    background-size: 44px 44px;
+    mask-image: radial-gradient(ellipse at 50% 40%, black 20%, transparent 75%);
+    -webkit-mask-image: radial-gradient(ellipse at 50% 40%, black 20%, transparent 75%);
+  }
+
+  .hero-radial {
+    background:
+      radial-gradient(1200px 700px at 65% 40%, rgba(59, 130, 246, 0.08), transparent 60%),
+      radial-gradient(900px 500px at 20% 80%, rgba(37, 99, 235, 0.04), transparent 60%);
+  }
+
+  /* Portrait cut-out mask — fades edges softly */
+  .portrait-mask {
+    -webkit-mask-image: radial-gradient(ellipse 45% 55% at 50% 45%, black 55%, transparent 85%);
+    mask-image: radial-gradient(ellipse 45% 55% at 50% 45%, black 55%, transparent 85%);
+  }
+
+  /* ---------- Orbital system ---------- */
+  .orbit-ring {
+    border: 1px dashed rgba(37, 99, 235, 0.22);
+    border-radius: 9999px;
+  }
+
+  @keyframes orbit-spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+  @keyframes orbit-spin-reverse {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(-360deg); }
+  }
+  .animate-orbit { animation: orbit-spin 60s linear infinite; }
+  .animate-orbit-slow { animation: orbit-spin 90s linear infinite; }
+  .animate-orbit-fast { animation: orbit-spin 40s linear infinite; }
+  .animate-orbit-counter { animation: orbit-spin-reverse 60s linear infinite; }
+  .animate-orbit-counter-slow { animation: orbit-spin-reverse 90s linear infinite; }
+  .animate-orbit-counter-fast { animation: orbit-spin-reverse 40s linear infinite; }
+
+  @keyframes energy-pulse {
+    0%, 100% { opacity: 0.35; transform: scale(1); }
+    50%      { opacity: 0.6; transform: scale(1.04); }
+  }
+  .animate-energy { animation: energy-pulse 5s ease-in-out infinite; }
+
+  @keyframes float-y {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-10px); }
+  }
+  .animate-float { animation: float-y 6s ease-in-out infinite; }
+
+  @keyframes particle-drift {
+    0%   { transform: translate(0, 0) scale(1); opacity: 0; }
+    10%  { opacity: 0.8; }
+    90%  { opacity: 0.8; }
+    100% { transform: translate(var(--dx, 40px), var(--dy, -40px)) scale(0.6); opacity: 0; }
+  }
+  .animate-particle { animation: particle-drift 8s ease-in-out infinite; }
+
+  @keyframes marquee {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+  .animate-marquee { animation: marquee 40s linear infinite; }
+
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .animate-orbit, .animate-orbit-slow, .animate-orbit-fast,
+    .animate-orbit-counter, .animate-orbit-counter-slow, .animate-orbit-counter-fast,
+    .animate-energy, .animate-float, .animate-particle, .animate-marquee {
+      animation: none !important;
+    }
+  }
+}

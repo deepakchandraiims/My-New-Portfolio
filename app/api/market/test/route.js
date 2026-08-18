@@ -2,6 +2,6 @@ import { proxyPortfolioRequest } from '@/lib/portfolio-supabase-proxy'
 
 export const runtime = 'nodejs'
 
-export async function GET(request) {
-  return proxyPortfolioRequest(request, '/live')
+export async function POST(request) {
+  return proxyPortfolioRequest(request, '/market/test')
 }

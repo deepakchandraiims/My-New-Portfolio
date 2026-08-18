@@ -69,10 +69,15 @@
       radial-gradient(900px 500px at 20% 80%, rgba(37, 99, 235, 0.04), transparent 60%);
   }
 
-  /* Portrait cut-out mask — fades edges softly */
+  /* Portrait is centered as a true circle inside the orbital system. */
   .portrait-mask {
-    -webkit-mask-image: radial-gradient(ellipse 45% 55% at 50% 45%, black 55%, transparent 85%);
-    mask-image: radial-gradient(ellipse 45% 55% at 50% 45%, black 55%, transparent 85%);
+    object-fit: cover;
+    -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 0 49%, transparent 50.5%);
+    mask-image: radial-gradient(circle at 50% 50%, #000 0 49%, transparent 50.5%);
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
   }
 
   /* ---------- Orbital system ---------- */

@@ -3,6 +3,7 @@ import { Providers } from './providers'
 import { Inter, Instrument_Serif } from 'next/font/google'
 import MarketEnhancements from '@/components/MarketEnhancements'
 import PortfolioEnhancements from '@/components/PortfolioEnhancements'
+import DirectSupabaseUploadBridge from '@/components/DirectSupabaseUploadBridge'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -30,6 +31,7 @@ export default function RootLayout({ children }) {
       </head>
       <body className="font-sans antialiased bg-white text-slate-900 selection:bg-blue-500/20 selection:text-blue-950">
         <Providers>
+          <DirectSupabaseUploadBridge />
           {children}
           <MarketEnhancements />
           <PortfolioEnhancements />

@@ -2,6 +2,7 @@ import './globals.css'
 import { Providers } from './providers'
 import { Inter, Instrument_Serif } from 'next/font/google'
 import MarketEnhancements from '@/components/MarketEnhancements'
+import PortfolioEnhancements from '@/components/PortfolioEnhancements'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -31,6 +32,7 @@ export default function RootLayout({ children }) {
         <Providers>
           {children}
           <MarketEnhancements />
+          <PortfolioEnhancements />
         </Providers>
       </body>
     </html>

@@ -1,6 +1,7 @@
 import './globals.css'
 import { Providers } from './providers'
 import { Inter, Instrument_Serif } from 'next/font/google'
+import MarketEnhancements from '@/components/MarketEnhancements'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -27,7 +28,10 @@ export default function RootLayout({ children }) {
         <script dangerouslySetInnerHTML={{__html:'window.addEventListener("error",function(e){if(e.error instanceof DOMException&&e.error.name==="DataCloneError"&&e.message&&e.message.includes("PerformanceServerTiming")){e.stopImmediatePropagation();e.preventDefault()}},true);'}} />
       </head>
       <body className="font-sans antialiased bg-white text-slate-900 selection:bg-blue-500/20 selection:text-blue-950">
-        <Providers>{children}</Providers>
+        <Providers>
+          {children}
+          <MarketEnhancements />
+        </Providers>
       </body>
     </html>
   )

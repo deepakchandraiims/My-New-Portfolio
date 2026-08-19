@@ -2,8 +2,8 @@
 
 import dynamic from 'next/dynamic'
 import { usePathname } from 'next/navigation'
+import RecruiterBody from '@/components/RecruiterBody'
 
-const PortfolioReferenceSections = dynamic(() => import('@/components/PortfolioReferenceSections'), { ssr: false })
 const DirectSupabaseUploadBridge = dynamic(() => import('@/components/DirectSupabaseUploadBridge'), { ssr: false })
 const AdminWorkflowEnhancements = dynamic(() => import('@/components/AdminWorkflowEnhancements'), { ssr: false })
 
@@ -20,8 +20,8 @@ export default function RuntimeEnhancements() {
     )
   }
 
-  // The public homepage body is replaced by the compact recruiter layout.
-  // It fetches the same CMS, Supabase portfolio and project-file APIs itself,
-  // so the older DOM enhancement bundles are intentionally not loaded here.
-  return <PortfolioReferenceSections />
+  // Public body is part of the initial render path. It ships with seed content
+  // immediately, then hydrates from the CMS and live portfolio APIs without
+  // first painting the legacy long page.
+  return <RecruiterBody />
 }

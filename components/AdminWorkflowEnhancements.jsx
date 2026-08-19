@@ -3,20 +3,24 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import {
-  Check, ChevronRight, FileText, FolderOpen, Loader2, Paperclip, Plus,
-  Save, SlidersHorizontal, Upload, Wrench, X,
+  BadgeCheck, ChevronRight, FileImage, FileText, Loader2, Paperclip,
+  Save, Upload, Wrench, X,
 } from 'lucide-react'
 
 const TOKEN_KEY = 'portfolio_admin_token'
 const inputCls = 'w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-[12px] text-slate-800 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
 
-function Drawer({ open, title, subtitle, icon: Icon, onClose, children }) {
-  if (!open) return null
+function getToken() {
+  return typeof window === 'undefined' ? '' : (localStorage.getItem(TOKEN_KEY) || '')
+}
+
+function Drawer({ open, title, subtitle, onClose, children }) {
+  if (!open || typeof document === 'undefined') return null
   return createPortal(
-    <div className="fixed inset-0 z-[140] bg-slate-950/35 backdrop-blur-[2px]" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+    <div className="fixed inset-0 z-[170] bg-slate-950/35 backdrop-blur-[2px]" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <div className="absolute inset-y-0 right-0 w-full max-w-[620px] bg-[#f8fafc] shadow-2xl border-l border-slate-200 overflow-y-auto">
         <div className="sticky top-0 z-10 bg-white/95 backdrop-blur border-b border-slate-200 px-5 md:px-6 py-4 flex items-start gap-3">
-          <div className="h-10 w-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center shrink-0"><Icon className="h-4.5 w-4.5 text-blue-600" /></div>
+          <div className="h-10 w-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center shrink-0"><Wrench className="h-4 w-4 text-blue-600" /></div>
           <div className="flex-1 min-w-0"><h2 className="text-[18px] font-semibold text-slate-950">{title}</h2><p className="mt-0.5 text-[11px] text-slate-500">{subtitle}</p></div>
           <button onClick={onClose} className="h-9 w-9 rounded-lg border border-slate-200 bg-white flex items-center justify-center text-slate-500 hover:bg-slate-50"><X className="h-4 w-4" /></button>
         </div>
@@ -24,14 +28,6 @@ function Drawer({ open, title, subtitle, icon: Icon, onClose, children }) {
       </div>
     </div>,
     document.body,
-  )
-}
-
-function SidebarAction({ icon: Icon, label, onClick }) {
-  return (
-    <button onClick={onClick} className="w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-left text-[12px] text-slate-300 hover:bg-white/[.06] hover:text-white transition">
-      <Icon className="h-4 w-4 shrink-0" /><span className="flex-1 truncate">{label}</span><ChevronRight className="h-3.5 w-3.5 text-slate-600" />
-    </button>
   )
 }
 
@@ -48,7 +44,6 @@ function SkillsToolsDrawer({ open, onClose }) {
   const [status, setStatus] = useState('')
 
   const load = useCallback(async () => {
-    setStatus('')
     const r = await fetch('/api/content')
     const d = await r.json()
     setContent(d)
@@ -75,201 +70,301 @@ function SkillsToolsDrawer({ open, onClose }) {
       if (fi >= 0) groups[fi] = { ...groups[fi], items: financeItems }
       else groups.unshift({ group: 'Finance & Valuation', items: financeItems })
       const ti = groups.findIndex((g) => /data|engineering|tool/i.test(g.group || ''))
-      if (ti >= 0) groups[ti] = { ...groups[ti], group: groups[ti].group || 'Tools & Platforms', items: toolItems }
+      if (ti >= 0) groups[ti] = { ...groups[ti], items: toolItems }
       else groups.push({ group: 'Tools & Platforms', items: toolItems })
-
       const next = { ...content, skills: groups, tools: toolItems, expertise: expertiseItems }
-      const token = localStorage.getItem(TOKEN_KEY) || ''
-      const r = await fetch('/api/content', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'x-admin-token': token },
-        body: JSON.stringify(next),
-      })
+      const r = await fetch('/api/content', { method: 'PUT', headers: { 'Content-Type': 'application/json', 'x-admin-token': getToken() }, body: JSON.stringify(next) })
       if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || `HTTP ${r.status}`)
-      setContent(next)
-      setStatus('Saved. The public Skills & Tools section will update automatically.')
+      setContent(next); setStatus('Saved. Public Skills & Tools will update automatically.')
     } catch (e) { setStatus(e.message || 'Save failed') }
     finally { setSaving(false) }
   }
 
   return (
-    <Drawer open={open} onClose={onClose} title="Skills & Tools" subtitle="Control the recruiter-facing finance skills, platforms and expertise panels." icon={Wrench}>
-      {!content ? <div className="py-12 text-center text-[12px] text-slate-400"><Loader2 className="h-5 w-5 animate-spin mx-auto mb-2" />Loading…</div> : (
-        <div className="space-y-5">
-          <div className="rounded-2xl border border-slate-200 bg-white p-5">
-            <div className="text-[11px] uppercase tracking-[.15em] text-blue-600 font-medium">Financial skills</div>
-            <p className="mt-1 text-[11px] text-slate-400">Comma-separated. These appear in the left panel of Skills & Tools.</p>
-            <textarea rows={5} value={finance} onChange={(e) => setFinance(e.target.value)} className={`${inputCls} mt-3 resize-y`} placeholder="Financial Modeling, DCF, LBO, M&A…" />
-          </div>
-          <div className="rounded-2xl border border-slate-200 bg-white p-5">
-            <div className="text-[11px] uppercase tracking-[.15em] text-blue-600 font-medium">Tools & platforms</div>
-            <p className="mt-1 text-[11px] text-slate-400">Excel, Power BI, SQL, Python, Capital IQ, Bloomberg, VBA, Tableau, etc.</p>
-            <textarea rows={5} value={tools} onChange={(e) => setTools(e.target.value)} className={`${inputCls} mt-3 resize-y`} placeholder="Excel, Power BI, SQL, Python…" />
-          </div>
-          <div className="rounded-2xl border border-slate-200 bg-white p-5">
-            <div className="text-[11px] uppercase tracking-[.15em] text-blue-600 font-medium">Expertise areas</div>
-            <p className="mt-1 text-[11px] text-slate-400">Short recruiter keywords shown as compact capability chips.</p>
-            <textarea rows={4} value={expertise} onChange={(e) => setExpertise(e.target.value)} className={`${inputCls} mt-3 resize-y`} placeholder="3 Statement Modeling, DCF & Valuation, LBO Modeling…" />
-          </div>
-          <div className="rounded-xl border border-blue-100 bg-blue-50/70 p-4 text-[11.5px] leading-relaxed text-slate-600">
-            Project-specific tools are still editable inside each Featured Project under its existing <strong className="text-slate-800">Tools</strong> field. This panel controls the portfolio-wide Tools & Platforms showcase.
-          </div>
-          {status && <div className={`rounded-lg px-3 py-2 text-[11.5px] ${/saved/i.test(status) ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'bg-red-50 text-red-600 border border-red-100'}`}>{status}</div>}
-          <button onClick={save} disabled={saving} className="w-full h-11 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-[12.5px] font-medium flex items-center justify-center gap-2">
-            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Save Skills & Tools
-          </button>
-        </div>
-      )}
+    <Drawer open={open} onClose={onClose} title="Skills & Tools" subtitle="Edit the recruiter-facing finance skills, platforms and expertise panels.">
+      {!content ? <div className="py-12 text-center text-[12px] text-slate-400"><Loader2 className="h-5 w-5 animate-spin mx-auto mb-2" />Loading…</div> : <div className="space-y-4">
+        <div className="rounded-xl border border-slate-200 bg-white p-4"><div className="text-[10px] uppercase tracking-widest text-blue-600">Financial skills</div><textarea rows={5} value={finance} onChange={(e) => setFinance(e.target.value)} className={`${inputCls} mt-3 resize-y`} /></div>
+        <div className="rounded-xl border border-slate-200 bg-white p-4"><div className="text-[10px] uppercase tracking-widest text-blue-600">Tools & platforms</div><textarea rows={5} value={tools} onChange={(e) => setTools(e.target.value)} className={`${inputCls} mt-3 resize-y`} /></div>
+        <div className="rounded-xl border border-slate-200 bg-white p-4"><div className="text-[10px] uppercase tracking-widest text-blue-600">Expertise areas</div><textarea rows={4} value={expertise} onChange={(e) => setExpertise(e.target.value)} className={`${inputCls} mt-3 resize-y`} /></div>
+        {status && <div className={`rounded-lg px-3 py-2 text-[11px] ${/saved/i.test(status) ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600'}`}>{status}</div>}
+        <button onClick={save} disabled={saving} className="w-full h-11 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-[12px] font-medium flex items-center justify-center gap-2 disabled:opacity-60">{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Save Skills & Tools</button>
+      </div>}
     </Drawer>
   )
 }
 
-function ProjectFilesDrawer({ open, onClose }) {
-  const [projects, setProjects] = useState([])
-  const [files, setFiles] = useState([])
-  const [projectId, setProjectId] = useState('')
-  const [uploading, setUploading] = useState(false)
-  const [status, setStatus] = useState('')
-  const inputRef = useRef(null)
-
-  const load = useCallback(async () => {
-    const [c, f] = await Promise.all([
-      fetch('/api/content').then((r) => r.json()),
-      fetch('/api/files').then((r) => r.json()),
-    ])
-    setProjects((c?.projects || []).filter((p) => !p.hidden).map((p) => ({ id: p.id, title: p.title })))
-    setFiles(Array.isArray(f) ? f : [])
-  }, [])
-
-  useEffect(() => { if (open) load().catch(() => setStatus('Could not load files.')) }, [open, load])
-
-  const assign = async (file, nextId) => {
-    const token = localStorage.getItem(TOKEN_KEY) || ''
-    const project = projects.find((p) => p.id === nextId)
-    const r = await fetch(`/api/files/${encodeURIComponent(file.id)}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', 'x-admin-token': token },
-      body: JSON.stringify({ projectId: nextId || null, projectTitle: project?.title || null }),
-    })
-    if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || `HTTP ${r.status}`)
-    setFiles((prev) => prev.map((x) => x.id === file.id ? { ...x, projectId: nextId || null, projectTitle: project?.title || null } : x))
-  }
-
-  const upload = (file) => new Promise((resolve, reject) => {
-    const token = localStorage.getItem(TOKEN_KEY) || ''
-    const project = projects.find((p) => p.id === projectId)
+async function uploadViaExistingPipeline(file, project, label = '') {
+  return new Promise((resolve, reject) => {
     const form = new FormData()
     form.append('file', file)
-    if (projectId) {
-      form.append('projectId', projectId)
-      form.append('projectTitle', project?.title || '')
-    }
+    form.append('projectId', project.id)
+    form.append('projectTitle', project.title || '')
+    if (label) form.append('label', label)
     const xhr = new XMLHttpRequest()
     xhr.open('POST', '/api/files/upload')
-    xhr.setRequestHeader('x-admin-token', token)
+    xhr.setRequestHeader('x-admin-token', getToken())
     xhr.onload = () => {
-      if (xhr.status >= 200 && xhr.status < 300) {
-        try {
-          const data = JSON.parse(xhr.responseText)
-          const added = data.file || data
-          setFiles((prev) => [added, ...prev.filter((x) => x.id !== added.id)])
-          resolve(added)
-        } catch (e) { reject(e) }
-      } else reject(new Error(`HTTP ${xhr.status}`))
+      try {
+        const d = JSON.parse(xhr.responseText || '{}')
+        if (xhr.status < 200 || xhr.status >= 300) return reject(new Error(d.error || `HTTP ${xhr.status}`))
+        resolve(d.file || d)
+      } catch (e) { reject(e) }
     }
     xhr.onerror = () => reject(new Error('Upload failed'))
     xhr.send(form)
   })
+}
 
-  const onFiles = async (selected) => {
-    const list = Array.from(selected || [])
-    if (!list.length) return
-    setUploading(true); setStatus('')
+async function imageThumbnail(file) {
+  const url = URL.createObjectURL(file)
+  try {
+    const img = await new Promise((resolve, reject) => {
+      const node = new Image()
+      node.onload = () => resolve(node)
+      node.onerror = reject
+      node.src = url
+    })
+    const ratio = img.naturalWidth / img.naturalHeight
+    const width = Math.min(1400, img.naturalWidth || 1200)
+    const height = Math.max(1, Math.round(width / ratio))
+    const canvas = document.createElement('canvas')
+    canvas.width = width; canvas.height = height
+    canvas.getContext('2d').drawImage(img, 0, 0, width, height)
+    const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.86))
+    if (!blob) throw new Error('Could not create image thumbnail')
+    return blob
+  } finally { URL.revokeObjectURL(url) }
+}
+
+async function pdfFirstPageThumbnail(file) {
+  const pdfjs = await import('pdfjs-dist/build/pdf.mjs')
+  if (!pdfjs.GlobalWorkerOptions.workerSrc) {
+    pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.mjs`
+  }
+  const bytes = new Uint8Array(await file.arrayBuffer())
+  const pdf = await pdfjs.getDocument({ data: bytes }).promise
+  const page = await pdf.getPage(1)
+  const raw = page.getViewport({ scale: 1 })
+  const scale = Math.min(2, 1400 / Math.max(1, raw.width))
+  const viewport = page.getViewport({ scale })
+  const canvas = document.createElement('canvas')
+  canvas.width = Math.ceil(viewport.width); canvas.height = Math.ceil(viewport.height)
+  const context = canvas.getContext('2d', { alpha: false })
+  context.fillStyle = '#ffffff'; context.fillRect(0, 0, canvas.width, canvas.height)
+  await page.render({ canvasContext: context, viewport }).promise
+  const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.86))
+  if (!blob) throw new Error('Could not render PDF first page')
+  return blob
+}
+
+async function makeThumbnailFile(file, project) {
+  let blob
+  if (file.type === 'application/pdf' || /\.pdf$/i.test(file.name)) blob = await pdfFirstPageThumbnail(file)
+  else if (file.type?.startsWith('image/')) blob = await imageThumbnail(file)
+  else return null
+  const safe = String(project.id || 'project').replace(/[^a-z0-9_-]+/gi, '-')
+  return new File([blob], `${safe}-thumbnail.jpg`, { type: 'image/jpeg' })
+}
+
+async function saveProjectCover(project, publicUrl) {
+  const token = getToken()
+  const r = await fetch('/api/content')
+  const content = await r.json()
+  const projects = (content.projects || []).map((p) => p.id === project.id ? { ...p, coverImageUrl: publicUrl } : p)
+  const next = { ...content, projects }
+  const wr = await fetch('/api/content', { method: 'PUT', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify(next) })
+  if (!wr.ok) throw new Error((await wr.json().catch(() => ({}))).error || 'Could not save project thumbnail')
+
+  // Keep the currently-open React project editor in sync so its later Save
+  // does not overwrite the automatically generated cover URL.
+  const idInput = [...document.querySelectorAll('input')].find((i) => i.value === project.id)
+  const row = idInput?.closest('div.rounded-xl')
+  if (row) {
+    const coverSelect = [...row.querySelectorAll('select')].find((sel) => [...sel.options].some((o) => /gradient \+ emoji/i.test(o.textContent || '')))
+    if (coverSelect) {
+      if (![...coverSelect.options].some((o) => o.value === publicUrl)) {
+        const option = document.createElement('option')
+        option.value = publicUrl; option.textContent = 'Auto thumbnail from project file'
+        coverSelect.appendChild(option)
+      }
+      const setter = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value')?.set
+      setter?.call(coverSelect, publicUrl)
+      coverSelect.dispatchEvent(new Event('change', { bubbles: true }))
+    }
+  }
+}
+
+async function generateAndApplyThumbnail(sourceFile, project) {
+  const thumb = await makeThumbnailFile(sourceFile, project)
+  if (!thumb) return null
+  const uploaded = await uploadViaExistingPipeline(thumb, project, `__project_thumbnail__:${sourceFile.name}`)
+  if (!uploaded?.publicUrl) throw new Error('Thumbnail upload did not return a URL')
+  await saveProjectCover(project, uploaded.publicUrl)
+  return uploaded.publicUrl
+}
+
+function ProjectFilesInline({ project }) {
+  const inputRef = useRef(null)
+  const [allFiles, setAllFiles] = useState([])
+  const [busy, setBusy] = useState(false)
+  const [status, setStatus] = useState('')
+  const [attachId, setAttachId] = useState('')
+
+  const refresh = useCallback(async () => {
+    const r = await fetch('/api/files')
+    const d = await r.json()
+    setAllFiles(Array.isArray(d) ? d : [])
+  }, [])
+  useEffect(() => { refresh().catch(() => {}) }, [refresh])
+
+  const attached = useMemo(() => allFiles.filter((f) => f.projectId === project.id && !String(f.label || '').startsWith('__project_thumbnail__')), [allFiles, project.id])
+  const available = useMemo(() => allFiles.filter((f) => f.projectId !== project.id && !String(f.label || '').startsWith('__project_thumbnail__')), [allFiles, project.id])
+
+  const onUpload = async (files) => {
+    const selected = Array.from(files || [])
+    if (!selected.length) return
+    setBusy(true); setStatus('')
     try {
-      for (const f of list) await upload(f)
-      setStatus(`${list.length} file${list.length === 1 ? '' : 's'} uploaded${projectId ? ' and attached to the selected project' : ''}.`)
+      let first = null
+      for (const file of selected) {
+        const uploaded = await uploadViaExistingPipeline(file, project)
+        if (!first) first = file
+        setAllFiles((prev) => [uploaded, ...prev.filter((x) => x.id !== uploaded.id)])
+      }
+      if (first) {
+        try {
+          const cover = await generateAndApplyThumbnail(first, project)
+          setStatus(cover ? `Uploaded ${selected.length} file${selected.length === 1 ? '' : 's'} · first page set as project thumbnail.` : `Uploaded ${selected.length} file${selected.length === 1 ? '' : 's'}. Automatic thumbnail supports PDF and image files.`)
+        } catch (thumbError) {
+          setStatus(`Files uploaded. Thumbnail could not be generated: ${thumbError.message}`)
+        }
+      }
+      await refresh()
     } catch (e) { setStatus(e.message || 'Upload failed') }
-    finally { setUploading(false); if (inputRef.current) inputRef.current.value = '' }
+    finally { setBusy(false); if (inputRef.current) inputRef.current.value = '' }
+  }
+
+  const attachExisting = async () => {
+    const file = allFiles.find((f) => f.id === attachId)
+    if (!file) return
+    setBusy(true); setStatus('')
+    try {
+      const r = await fetch(`/api/files/${encodeURIComponent(file.id)}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'x-admin-token': getToken() }, body: JSON.stringify({ projectId: project.id, projectTitle: project.title }) })
+      if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || `HTTP ${r.status}`)
+      setAllFiles((prev) => prev.map((x) => x.id === file.id ? { ...x, projectId: project.id, projectTitle: project.title } : x))
+      setAttachId('')
+      if (file.category === 'pdf' || file.category === 'image' || /\.(pdf|png|jpe?g|webp)$/i.test(file.originalName || '')) {
+        try {
+          const response = await fetch(file.publicUrl)
+          if (response.ok) {
+            const blob = await response.blob()
+            const source = new File([blob], file.originalName || file.label || 'project-file', { type: file.mimeType || blob.type })
+            await generateAndApplyThumbnail(source, project)
+            setStatus('Existing file attached · its first page/image is now the project thumbnail.')
+          } else setStatus('Existing file attached to project.')
+        } catch { setStatus('Existing file attached to project.') }
+      } else setStatus('Existing file attached to project.')
+    } catch (e) { setStatus(e.message || 'Could not attach file') }
+    finally { setBusy(false) }
   }
 
   return (
-    <Drawer open={open} onClose={onClose} title="Project Files" subtitle="Upload directly to a Featured Project or reassign any existing file after upload." icon={FolderOpen}>
-      <div className="space-y-5">
-        <div className="rounded-2xl border border-slate-200 bg-white p-5">
-          <div className="text-[11px] uppercase tracking-[.15em] text-blue-600 font-medium">Upload & attach</div>
-          <p className="mt-1 text-[11px] text-slate-400">Choose the destination project first. The file will be linked to that project immediately.</p>
-          <select value={projectId} onChange={(e) => setProjectId(e.target.value)} className={`${inputCls} mt-3`}>
-            <option value="">— Upload as unassigned —</option>
-            {projects.map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}
-          </select>
-          <input ref={inputRef} type="file" multiple className="hidden" onChange={(e) => onFiles(e.target.files)} accept=".pdf,.docx,.doc,.xlsx,.xls,.pptx,.ppt,.csv,.md,.zip,.py,.sql,.txt,image/*,video/*" />
-          <button onClick={() => inputRef.current?.click()} disabled={uploading} className="mt-3 w-full h-11 rounded-xl border-2 border-dashed border-blue-200 bg-blue-50/50 hover:bg-blue-50 text-blue-700 text-[12px] font-medium flex items-center justify-center gap-2 transition">
-            {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />} {uploading ? 'Uploading…' : 'Choose files to upload'}
-          </button>
-        </div>
-
-        <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
-          <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between gap-3">
-            <div><div className="text-[11px] uppercase tracking-[.15em] text-slate-500 font-medium">Uploaded files</div><div className="mt-1 text-[10.5px] text-slate-400">Change the project at any time. No re-upload needed.</div></div>
-            <span className="text-[10px] px-2 py-1 rounded-full bg-slate-50 border border-slate-200 text-slate-500">{files.length}</span>
-          </div>
-          <div className="divide-y divide-slate-100 max-h-[440px] overflow-y-auto">
-            {files.length === 0 && <div className="p-6 text-center text-[12px] text-slate-400">No uploaded files yet.</div>}
-            {files.map((file) => (
-              <div key={file.id} className="p-4 flex items-start gap-3">
-                <div className="h-9 w-9 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-center shrink-0"><FileText className="h-4 w-4 text-blue-600" /></div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-[12px] font-medium text-slate-800 truncate">{file.label || file.originalName}</div>
-                  <div className="mt-0.5 text-[10.5px] text-slate-400 truncate">{file.projectTitle || 'Unassigned'}</div>
-                  <select value={file.projectId || ''} onChange={(e) => assign(file, e.target.value).catch((err) => setStatus(err.message || 'Assignment failed'))} className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] text-slate-700 outline-none focus:border-blue-400">
-                    <option value="">— Unassigned —</option>
-                    {projects.map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}
-                  </select>
-                </div>
-                {file.publicUrl && <a href={file.publicUrl} target="_blank" rel="noreferrer" className="h-8 w-8 rounded-lg border border-slate-200 bg-white flex items-center justify-center text-slate-400 hover:text-blue-600"><Paperclip className="h-3.5 w-3.5" /></a>}
-              </div>
-            ))}
-          </div>
-        </div>
-        {status && <div className={`rounded-lg px-3 py-2 text-[11.5px] ${/uploaded|attached/i.test(status) ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'bg-red-50 text-red-600 border border-red-100'}`}>{status}</div>}
+    <div data-inline-project-files-ui="true" className="mt-5 rounded-xl border border-blue-100 bg-white overflow-hidden shadow-sm">
+      <div className="px-4 py-3 border-b border-blue-50 bg-blue-50/45 flex items-center justify-between gap-3">
+        <div><div className="text-[11px] uppercase tracking-[.14em] text-blue-700 font-medium flex items-center gap-2"><Paperclip className="h-3.5 w-3.5" /> Project Files & Thumbnail</div><div className="mt-1 text-[10.5px] text-slate-500">Upload here and the file is attached to this project automatically. For PDF/image files, the first page/image becomes the project card thumbnail.</div></div>
+        <BadgeCheck className="h-5 w-5 text-blue-500 shrink-0" />
       </div>
-    </Drawer>
+      <div className="p-4 grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-4">
+        <div>
+          <input ref={inputRef} className="hidden" type="file" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.csv,.md,.zip,.py,.sql,.txt,image/*,video/*" onChange={(e) => onUpload(e.target.files)} />
+          <button disabled={busy} onClick={() => inputRef.current?.click()} className="w-full min-h-[86px] rounded-xl border-2 border-dashed border-blue-200 bg-blue-50/40 hover:bg-blue-50 text-blue-700 flex flex-col items-center justify-center gap-2 transition disabled:opacity-60">
+            {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : <Upload className="h-5 w-5" />}
+            <span className="text-[12px] font-medium">{busy ? 'Working…' : 'Upload file for this project'}</span>
+            <span className="text-[9.5px] text-slate-400">PDF, Excel, PPT, Word, images, ZIP and more</span>
+          </button>
+          <div className="mt-3 flex gap-2">
+            <select value={attachId} onChange={(e) => setAttachId(e.target.value)} className={`${inputCls} flex-1 min-w-0`}>
+              <option value="">— Attach an already uploaded file —</option>
+              {available.map((f) => <option key={f.id} value={f.id}>{f.label || f.originalName} {f.projectTitle ? `(${f.projectTitle})` : '(unassigned)'}</option>)}
+            </select>
+            <button disabled={!attachId || busy} onClick={attachExisting} className="px-3 rounded-lg bg-slate-900 text-white text-[11px] font-medium disabled:opacity-40">Attach</button>
+          </div>
+        </div>
+        <div className="rounded-xl border border-slate-200 overflow-hidden">
+          <div className="px-3 py-2.5 bg-slate-50 border-b border-slate-100 flex items-center justify-between"><span className="text-[10px] uppercase tracking-widest text-slate-500">Attached files</span><span className="text-[9px] text-slate-400">{attached.length}</span></div>
+          <div className="max-h-[180px] overflow-y-auto divide-y divide-slate-100">{attached.length ? attached.map((f) => <div key={f.id} className="px-3 py-2.5 flex items-center gap-2"><span className="h-7 w-7 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center shrink-0">{f.category === 'image' ? <FileImage className="h-3.5 w-3.5 text-blue-600" /> : <FileText className="h-3.5 w-3.5 text-blue-600" />}</span><div className="flex-1 min-w-0"><div className="text-[10.5px] font-medium text-slate-700 truncate">{f.label || f.originalName}</div><div className="text-[9px] text-slate-400 truncate">{f.category || 'file'}</div></div>{f.publicUrl && <a href={f.publicUrl} target="_blank" rel="noreferrer" className="h-7 w-7 rounded-lg border border-slate-200 flex items-center justify-center text-slate-400 hover:text-blue-600"><Paperclip className="h-3 w-3" /></a>}</div>) : <div className="p-6 text-center text-[10px] text-slate-400">No files attached yet.</div>}</div>
+        </div>
+      </div>
+      {status && <div className={`mx-4 mb-4 rounded-lg px-3 py-2 text-[10.5px] ${/uploaded|attached|thumbnail/i.test(status) && !/could not|failed/i.test(status) ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'bg-amber-50 text-amber-700 border border-amber-100'}`}>{status}</div>}
+    </div>
   )
 }
 
 export default function AdminWorkflowEnhancements() {
   const [navHost, setNavHost] = useState(null)
   const [skillsOpen, setSkillsOpen] = useState(false)
-  const [filesOpen, setFilesOpen] = useState(false)
+  const [projects, setProjects] = useState([])
+  const [projectHosts, setProjectHosts] = useState([])
+
+  const loadProjects = useCallback(() => fetch('/api/content').then((r) => r.json()).then((d) => setProjects(d?.projects || [])).catch(() => {}), [])
+  useEffect(() => { loadProjects() }, [loadProjects])
 
   useEffect(() => {
     if (typeof document === 'undefined') return undefined
     let observer
-    let host
-    const install = () => {
+    let raf = 0
+
+    const installSidebar = () => {
       const nav = document.querySelector('.admin-dashboard-shell aside nav')
-      if (!nav || nav.querySelector('[data-workflow-admin-host="true"]')) return
-      host = document.createElement('div')
-      host.dataset.workflowAdminHost = 'true'
-      host.className = 'mt-2 pt-2 border-t border-white/[.07] space-y-1'
-      nav.appendChild(host)
+      if (!nav) return
+      let host = nav.querySelector('[data-workflow-admin-host="true"]')
+      if (!host) {
+        host = document.createElement('div')
+        host.dataset.workflowAdminHost = 'true'
+        host.className = 'mt-2 pt-2 border-t border-white/[.07]'
+        nav.appendChild(host)
+      }
       setNavHost(host)
     }
-    install()
-    observer = new MutationObserver(install)
+
+    const installProjectHosts = () => {
+      const next = []
+      for (const project of projects) {
+        const idInput = [...document.querySelectorAll('input')].find((i) => i.value === project.id)
+        if (!idInput) continue
+        const row = idInput.closest('div.rounded-xl')
+        if (!row) continue
+        const expanded = [...row.children].find((node) => node instanceof HTMLElement && node.classList.contains('border-t'))
+        if (!expanded) continue
+        let host = expanded.querySelector(`[data-inline-project-files-host="${CSS.escape(project.id)}"]`)
+        if (!host) {
+          host = document.createElement('div')
+          host.dataset.inlineProjectFilesHost = project.id
+          expanded.appendChild(host)
+        }
+        next.push({ project, host })
+      }
+      setProjectHosts((prev) => {
+        if (prev.length === next.length && prev.every((p, i) => p.project.id === next[i]?.project.id && p.host === next[i]?.host)) return prev
+        return next
+      })
+    }
+
+    const scan = () => {
+      cancelAnimationFrame(raf)
+      raf = requestAnimationFrame(() => { installSidebar(); installProjectHosts() })
+    }
+    scan()
+    observer = new MutationObserver(scan)
     observer.observe(document.body, { childList: true, subtree: true })
-    return () => { observer?.disconnect(); setNavHost(null); if (host?.isConnected) host.remove() }
-  }, [])
+    return () => { observer.disconnect(); cancelAnimationFrame(raf); setProjectHosts([]); setNavHost(null) }
+  }, [projects])
 
   return (
     <>
-      {navHost && createPortal(
-        <>
-          <SidebarAction icon={Wrench} label="Skills & Tools" onClick={() => setSkillsOpen(true)} />
-          <SidebarAction icon={FolderOpen} label="Project Files" onClick={() => setFilesOpen(true)} />
-        </>, navHost)}
+      {navHost && createPortal(<button onClick={() => setSkillsOpen(true)} className="w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-left text-[12px] text-slate-300 hover:bg-white/[.06] hover:text-white transition"><Wrench className="h-4 w-4" /><span className="flex-1">Skills & Tools</span><ChevronRight className="h-3.5 w-3.5 text-slate-600" /></button>, navHost)}
+      {projectHosts.map(({ project, host }) => createPortal(<ProjectFilesInline key={project.id} project={project} />, host))}
       <SkillsToolsDrawer open={skillsOpen} onClose={() => setSkillsOpen(false)} />
-      <ProjectFilesDrawer open={filesOpen} onClose={() => setFilesOpen(false)} />
     </>
   )
 }

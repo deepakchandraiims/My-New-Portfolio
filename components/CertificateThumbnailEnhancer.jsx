@@ -36,20 +36,49 @@ export default function CertificateThumbnailEnhancer() {
           const index = INDEX[title]
           if (index === undefined) return
 
-          const preview = document.createElement('div')
+          const preview = document.createElement('a')
           preview.dataset.certificatePreview = 'true'
-          preview.setAttribute('role', 'img')
-          preview.setAttribute('aria-label', `${title} certificate preview`)
-          preview.style.height = '168px'
+          preview.href = `/certificates-sprite?index=${index}`
+          preview.target = '_blank'
+          preview.rel = 'noreferrer'
+          preview.setAttribute('aria-label', `Open ${title} certificate`)
+          preview.style.display = 'block'
+          preview.style.height = '190px'
           preview.style.margin = '-4px -4px 16px'
           preview.style.border = '1px solid rgb(226 232 240)'
           preview.style.borderRadius = '12px'
-          preview.style.backgroundColor = '#f8fafc'
-          preview.style.backgroundImage = "url('/certificates-sprite')"
-          preview.style.backgroundRepeat = 'no-repeat'
-          preview.style.backgroundSize = '100% 1500%'
-          preview.style.backgroundPosition = `center ${(index / 14) * 100}%`
+          preview.style.overflow = 'hidden'
+          preview.style.background = '#fff'
+          preview.style.position = 'relative'
           preview.style.boxShadow = '0 8px 20px -18px rgba(15,23,42,.35)'
+
+          const img = document.createElement('img')
+          img.src = `/certificates-sprite?index=${index}`
+          img.alt = `${title} certificate`
+          img.loading = 'lazy'
+          img.decoding = 'async'
+          img.style.width = '100%'
+          img.style.height = '100%'
+          img.style.objectFit = 'contain'
+          img.style.background = '#fff'
+          img.onerror = () => {
+            preview.style.background = '#f8fafc'
+          }
+          preview.appendChild(img)
+
+          const badge = document.createElement('span')
+          badge.textContent = 'View certificate ↗'
+          badge.style.position = 'absolute'
+          badge.style.right = '8px'
+          badge.style.bottom = '8px'
+          badge.style.padding = '5px 8px'
+          badge.style.borderRadius = '999px'
+          badge.style.background = 'rgba(15,23,42,.82)'
+          badge.style.color = 'white'
+          badge.style.fontSize = '9px'
+          badge.style.fontWeight = '600'
+          preview.appendChild(badge)
+
           card.prepend(preview)
         })
       }

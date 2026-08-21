@@ -1,0 +1,1 @@
+Certificate preview enhancement branch marker. Adds actual certificate thumbnail previews to the public certifications gallery without changing the hero or theme.

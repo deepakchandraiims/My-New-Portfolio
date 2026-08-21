@@ -1,0 +1,1 @@
+Individual certificate preview assets generated from the original certificate ZIP. The runtime route decodes the corresponding .webp.b64 file by index.

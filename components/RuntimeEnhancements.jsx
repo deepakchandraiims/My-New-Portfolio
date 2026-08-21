@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import RecruiterBody from '@/components/RecruiterBody'
 import InvestmentLabEnhancement from '@/components/InvestmentLabEnhancement'
 import CertificateGallery from '@/components/CertificateGallery'
+import CertificateThumbnailEnhancer from '@/components/CertificateThumbnailEnhancer'
 
 const DirectSupabaseUploadBridge = dynamic(() => import('@/components/DirectSupabaseUploadBridge'), { ssr: false })
 const AdminWorkflowEnhancements = dynamic(() => import('@/components/AdminWorkflowEnhancements'), { ssr: false })
@@ -31,6 +32,7 @@ export default function RuntimeEnhancements() {
       <RecruiterBody />
       <InvestmentLabEnhancement />
       <CertificateGallery />
+      <CertificateThumbnailEnhancer />
     </>
   )
 }

@@ -6,9 +6,11 @@ import RecruiterBody from '@/components/RecruiterBody'
 import InvestmentLabEnhancement from '@/components/InvestmentLabEnhancement'
 import CertificateGallery from '@/components/CertificateGallery'
 import CertificateThumbnailEnhancer from '@/components/CertificateThumbnailEnhancer'
+import CertificateDocumentEnhancer from '@/components/CertificateDocumentEnhancer'
 
 const DirectSupabaseUploadBridge = dynamic(() => import('@/components/DirectSupabaseUploadBridge'), { ssr: false })
 const AdminWorkflowEnhancements = dynamic(() => import('@/components/AdminWorkflowEnhancements'), { ssr: false })
+const CertificationFileAdminEnhancer = dynamic(() => import('@/components/CertificationFileAdminEnhancer'), { ssr: false })
 const PortfolioEnhancements = dynamic(() => import('@/components/PortfolioEnhancements'), { ssr: false })
 const MarketEnhancements = dynamic(() => import('@/components/MarketEnhancements'), { ssr: false })
 
@@ -21,6 +23,7 @@ export default function RuntimeEnhancements() {
       <>
         <DirectSupabaseUploadBridge />
         <AdminWorkflowEnhancements />
+        <CertificationFileAdminEnhancer />
         <PortfolioEnhancements />
         <MarketEnhancements />
       </>
@@ -33,6 +36,7 @@ export default function RuntimeEnhancements() {
       <InvestmentLabEnhancement />
       <CertificateGallery />
       <CertificateThumbnailEnhancer />
+      <CertificateDocumentEnhancer />
     </>
   )
 }

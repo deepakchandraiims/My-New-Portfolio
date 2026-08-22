@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { ArrowRight, BriefcaseBusiness, CheckCircle2, X } from 'lucide-react'
+import { ArrowRight, BriefcaseBusiness, CheckCircle2, ExternalLink, FileText, X } from 'lucide-react'
 import { RECRUITER_PROJECTS } from '@/lib/recruiter-projects'
 
 const CATEGORY_ORDER = [
@@ -14,11 +14,32 @@ const CATEGORY_ORDER = [
   'Growth Equity',
 ]
 
+function enrichProjects(projects, files) {
+  const allFiles = Array.isArray(files) ? files : []
+  return projects.map((project) => {
+    const matching = allFiles.filter((file) => file?.projectId === project.id)
+    const thumbnail = matching.find((file) => String(file?.label || '').startsWith('__project_thumbnail__') && file?.publicUrl)
+    const attachments = matching.filter((file) => !String(file?.label || '').startsWith('__project_thumbnail__') && file?.publicUrl)
+    const fallbackImage = attachments.find((file) => String(file?.mimeType || '').startsWith('image/') || file?.category === 'image')
+    return {
+      ...project,
+      projectFiles: attachments,
+      resolvedCoverImageUrl: project.coverImageUrl || thumbnail?.publicUrl || fallbackImage?.publicUrl || '',
+    }
+  })
+}
+
 function ProjectModal({ project, onClose }) {
   if (!project || typeof document === 'undefined') return null
+  const files = project.projectFiles || []
   return createPortal(
     <div className="fixed inset-0 z-[190] bg-slate-950/50 backdrop-blur-sm p-3 md:p-8 overflow-y-auto" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <div className="max-w-4xl mx-auto bg-white rounded-2xl border border-slate-200 shadow-2xl overflow-hidden">
+        {project.resolvedCoverImageUrl && (
+          <div className="bg-slate-50 border-b border-slate-100 p-4 md:p-6">
+            <img src={project.resolvedCoverImageUrl} alt={`${project.title} preview`} className="w-full max-h-[460px] object-contain rounded-xl border border-slate-200 bg-white" />
+          </div>
+        )}
         <div className="p-5 md:p-7 border-b border-slate-100 flex items-start gap-4">
           <div className="flex-1 min-w-0">
             <div className="text-[10px] uppercase tracking-[.18em] text-blue-600">{project.category}</div>
@@ -33,6 +54,23 @@ function ProjectModal({ project, onClose }) {
             <p className="mt-2 text-[13px] leading-relaxed text-slate-700">{project.problem}</p>
             <div className="mt-6 text-[10px] uppercase tracking-widest text-slate-400">Approach</div>
             <div className="mt-3 space-y-2">{(project.approach || []).map((step, i) => <div key={i} className="flex gap-3 text-[12.5px] text-slate-700"><span className="h-5 w-5 rounded-full bg-blue-50 text-blue-700 flex items-center justify-center text-[10px] shrink-0">{i + 1}</span><span>{step}</span></div>)}</div>
+            {files.length > 0 && (
+              <div className="mt-7">
+                <div className="text-[10px] uppercase tracking-widest text-slate-400">Project files</div>
+                <div className="mt-3 grid gap-2">
+                  {files.map((file) => (
+                    <a key={file.id || file.publicUrl} href={file.publicUrl} target="_blank" rel="noreferrer" className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 hover:border-blue-200 hover:bg-blue-50/40 transition">
+                      <span className="h-8 w-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center shrink-0"><FileText className="h-4 w-4 text-blue-600" /></span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-[11.5px] font-medium text-slate-800 truncate">{file.originalName || file.label || 'Project file'}</span>
+                        <span className="block mt-0.5 text-[9.5px] uppercase tracking-wider text-slate-400">{file.category || file.mimeType || 'Document'}</span>
+                      </span>
+                      <ExternalLink className="h-3.5 w-3.5 text-blue-500 shrink-0" />
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
           <div>
             <div className="text-[10px] uppercase tracking-widest text-slate-400">Deliverables</div>
@@ -63,15 +101,21 @@ export default function ProjectCatalogEnhancer() {
     node.className = 'project-catalog-root'
     section.appendChild(node)
     setMount(node)
-    fetch('/api/content', { cache: 'no-store' })
-      .then((r) => r.ok ? r.json() : null)
-      .then((data) => {
-        if (cancelled || !Array.isArray(data?.projects)) return
-        const next = data.projects.filter((p) => !p.hidden)
-        const isNewCatalog = CATEGORY_ORDER.every((c) => next.some((p) => p.category === c)) && next.length >= 30
-        if (isNewCatalog) setProjects(next)
-      })
-      .catch(() => {})
+
+    Promise.all([
+      fetch('/api/content', { cache: 'no-store' }).then((r) => r.ok ? r.json() : null).catch(() => null),
+      fetch('/api/files', { cache: 'no-store' }).then((r) => r.ok ? r.json() : []).catch(() => []),
+    ]).then(([data, files]) => {
+      if (cancelled) return
+      let next = RECRUITER_PROJECTS
+      if (Array.isArray(data?.projects)) {
+        const cmsProjects = data.projects.filter((p) => !p.hidden)
+        const isNewCatalog = CATEGORY_ORDER.every((c) => cmsProjects.some((p) => p.category === c)) && cmsProjects.length >= 30
+        if (isNewCatalog) next = cmsProjects
+      }
+      setProjects(enrichProjects(next, files))
+    })
+
     return () => {
       cancelled = true
       section.classList.remove('project-catalog-active')
@@ -102,9 +146,14 @@ export default function ProjectCatalogEnhancer() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3">
           {visible.map((p, idx) => <button key={p.id} onClick={() => setActiveProject(p)} className="text-left rounded-xl border border-slate-200 bg-white hover:border-blue-200 hover:shadow-lg hover:shadow-blue-100/30 transition overflow-hidden group">
-            <div className="h-28 bg-gradient-to-br from-blue-50 to-slate-100 relative flex items-center justify-center">
-              <div className="text-[48px] font-serif text-blue-900/[.07]">{String(idx + 1).padStart(2, '0')}</div>
-              <span className="absolute top-2.5 left-2.5 text-[8.5px] uppercase tracking-widest bg-white/90 border border-blue-100 rounded px-2 py-1 text-blue-700">{p.category}</span>
+            <div className="h-28 bg-gradient-to-br from-blue-50 to-slate-100 relative flex items-center justify-center overflow-hidden">
+              {p.resolvedCoverImageUrl ? (
+                <img src={p.resolvedCoverImageUrl} alt={`${p.title} thumbnail`} className="absolute inset-0 h-full w-full object-cover object-top transition-transform duration-300 group-hover:scale-[1.02]" />
+              ) : (
+                <div className="text-[48px] font-serif text-blue-900/[.07]">{String(idx + 1).padStart(2, '0')}</div>
+              )}
+              <span className="absolute top-2.5 left-2.5 text-[8.5px] uppercase tracking-widest bg-white/95 border border-blue-100 rounded px-2 py-1 text-blue-700 shadow-sm">{p.category}</span>
+              {(p.projectFiles || []).length > 0 && <span className="absolute bottom-2.5 right-2.5 text-[8.5px] bg-slate-900/80 text-white rounded px-2 py-1">{p.projectFiles.length} file{p.projectFiles.length === 1 ? '' : 's'}</span>}
             </div>
             <div className="p-4">
               <div className="text-[13.5px] font-semibold leading-snug text-slate-900 min-h-[54px]">{p.title}</div>

@@ -1,130 +1,84 @@
-import { MongoClient } from 'mongodb'
 import { NextResponse } from 'next/server'
-import { createHash, timingSafeEqual } from 'crypto'
 import { SEED_CONTENT } from '@/lib/portfolio-data'
 import { RECRUITER_PROJECTS, RECRUITER_PROJECT_CATEGORIES } from '@/lib/recruiter-projects'
 
 export const runtime = 'nodejs'
 
-const MIGRATION = 'recruiter-30-projects-v2'
-const FALLBACK_HASH = '58f67ecff7dae550c76dc6ea5192ed1475317f655c13232c1151e39bb3708657'
-let client
-let db
+const CONTENT_API = 'https://mnppdqrhnpllzafufhtd.supabase.co/functions/v1/content-api'
 
-function sha256(v = '') { return createHash('sha256').update(String(v)).digest('hex') }
-function expectedHash() {
-  if (process.env.ADMIN_PASSWORD_HASH) return String(process.env.ADMIN_PASSWORD_HASH).trim().toLowerCase()
-  if (process.env.ADMIN_PASSWORD) return sha256(process.env.ADMIN_PASSWORD)
-  return FALLBACK_HASH
-}
-function isAdmin(request) {
-  const token = request.headers.get('x-admin-token')
-  if (!token) return false
-  const actual = Buffer.from(sha256(token), 'hex')
-  const expected = Buffer.from(expectedHash(), 'hex')
-  return actual.length === expected.length && timingSafeEqual(actual, expected)
-}
-async function getDb() {
-  if (db) return db
-  if (!process.env.MONGO_URL || !process.env.DB_NAME) throw new Error('Database is not configured')
-  if (!client) {
-    client = new MongoClient(process.env.MONGO_URL, { serverSelectionTimeoutMS: 8000 })
-    await client.connect()
-  }
-  db = client.db(process.env.DB_NAME)
-  return db
-}
 function json(body, init) {
   const res = NextResponse.json(body, init)
   res.headers.set('Cache-Control', 'no-store')
   return res
 }
-async function currentContent(database) {
-  const doc = await database.collection('site_content').findOne({ id: 'main' })
-  let content = doc?.content || SEED_CONTENT
-  if (!doc || doc.projectCatalogMigration !== MIGRATION) {
-    content = {
-      ...content,
-      categories: RECRUITER_PROJECT_CATEGORIES,
-      projects: RECRUITER_PROJECTS,
-    }
+
+async function callContentApi(request, method, body) {
+  const headers = { 'Content-Type': 'application/json' }
+  const token = request?.headers?.get?.('x-admin-token')
+  if (token) headers['x-admin-token'] = token
+
+  const response = await fetch(CONTENT_API, {
+    method,
+    headers,
+    cache: 'no-store',
+    ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+  })
+  const payload = await response.json().catch(() => ({}))
+  if (!response.ok) {
+    return { ok: false, status: response.status, payload }
   }
-  return { doc, content }
+  return { ok: true, status: response.status, payload }
 }
 
-export async function GET() {
+export async function GET(request) {
   try {
-    const database = await getDb()
-    const { doc, content } = await currentContent(database)
+    const upstream = await callContentApi(request, 'GET')
+    const overrides = upstream.ok && upstream.payload && typeof upstream.payload === 'object'
+      ? upstream.payload
+      : {}
 
-    if (!doc || doc.projectCatalogMigration !== MIGRATION) {
-      await database.collection('site_content').updateOne(
-        { id: 'main' },
-        { $set: { id: 'main', content, projectCatalogMigration: MIGRATION, updatedAt: new Date() } },
-        { upsert: true }
-      )
+    const content = {
+      ...SEED_CONTENT,
+      ...overrides,
+      categories: Array.isArray(overrides.categories) && overrides.categories.length
+        ? overrides.categories
+        : RECRUITER_PROJECT_CATEGORIES,
+      projects: Array.isArray(overrides.projects) && overrides.projects.length
+        ? overrides.projects
+        : RECRUITER_PROJECTS,
     }
 
     return json(content)
   } catch (error) {
-    return json({ error: 'Content unavailable', detail: String(error?.message || error) }, { status: 500 })
+    return json({
+      ...SEED_CONTENT,
+      categories: RECRUITER_PROJECT_CATEGORIES,
+      projects: RECRUITER_PROJECTS,
+      _warning: String(error?.message || error),
+    })
   }
 }
 
 export async function PATCH(request) {
-  if (!isAdmin(request)) return json({ error: 'unauthorized' }, { status: 401 })
   try {
     const body = await request.json()
-    const allowed = ['certificateDocuments']
-    const keys = Object.keys(body || {})
-    if (!keys.length) return json({ error: 'No fields supplied' }, { status: 400 })
-    for (const key of keys) if (!allowed.includes(key)) return json({ error: `unsupported field: ${key}` }, { status: 400 })
-
-    const database = await getDb()
-    const { content } = await currentContent(database)
-    const next = { ...content, ...body }
-
-    await database.collection('site_content').updateOne(
-      { id: 'main' },
-      { $set: { id: 'main', content: next, projectCatalogMigration: MIGRATION, updatedAt: new Date() } },
-      { upsert: true }
-    )
-    return json({ ok: true, content: next, updatedAt: new Date() })
+    const upstream = await callContentApi(request, 'PATCH', body)
+    if (!upstream.ok) return json(upstream.payload, { status: upstream.status })
+    return json(upstream.payload)
   } catch (error) {
     return json({ error: 'Partial save failed', detail: String(error?.message || error) }, { status: 500 })
   }
 }
 
 export async function PUT(request) {
-  if (!isAdmin(request)) return json({ error: 'unauthorized' }, { status: 401 })
   try {
     const body = await request.json()
-    const database = await getDb()
-    const required = ['owner', 'chapters', 'categories', 'projects', 'skills', 'experience']
-    const missing = required.filter((key) => !(key in body))
 
-    // Backward-compatible path for the certificate uploader. It may have loaded
-    // a reduced/stale content object, but certificate saves should never require
-    // resubmitting the entire CMS document.
-    if (missing.length && body?.certificateDocuments) {
-      const { content } = await currentContent(database)
-      const next = { ...content, certificateDocuments: body.certificateDocuments }
-      await database.collection('site_content').updateOne(
-        { id: 'main' },
-        { $set: { id: 'main', content: next, projectCatalogMigration: MIGRATION, updatedAt: new Date() } },
-        { upsert: true }
-      )
-      return json({ ok: true, content: next, updatedAt: new Date() })
-    }
-
-    if (missing.length) return json({ error: `missing key: ${missing[0]}` }, { status: 400 })
-
-    await database.collection('site_content').updateOne(
-      { id: 'main' },
-      { $set: { id: 'main', content: body, projectCatalogMigration: MIGRATION, updatedAt: new Date() } },
-      { upsert: true }
-    )
-    return json({ ok: true, updatedAt: new Date() })
+    // Backward compatibility: certificate uploader may send a full page object.
+    // Persist it as-is in Supabase; certificate-only updates should use PATCH.
+    const upstream = await callContentApi(request, 'PUT', body)
+    if (!upstream.ok) return json(upstream.payload, { status: upstream.status })
+    return json(upstream.payload)
   } catch (error) {
     return json({ error: 'Save failed', detail: String(error?.message || error) }, { status: 500 })
   }

@@ -7,6 +7,7 @@ import ProjectCatalogEnhancer from '@/components/ProjectCatalogEnhancer'
 import InvestmentLabEnhancement from '@/components/InvestmentLabEnhancement'
 import CertificateGallery from '@/components/CertificateGallery'
 import CertificateDocumentEnhancer from '@/components/CertificateDocumentEnhancer'
+import AdminSectionSync from '@/components/AdminSectionSync'
 
 const DirectSupabaseUploadBridge = dynamic(() => import('@/components/DirectSupabaseUploadBridge'), { ssr: false })
 const AdminWorkflowEnhancements = dynamic(() => import('@/components/AdminWorkflowEnhancements'), { ssr: false })
@@ -22,6 +23,7 @@ export default function RuntimeEnhancements() {
   if (isAdmin) {
     return (
       <>
+        <AdminSectionSync />
         <DirectSupabaseUploadBridge />
         <AdminWorkflowEnhancements />
         <CertificationFileAdminEnhancer />

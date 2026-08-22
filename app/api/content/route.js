@@ -66,6 +66,38 @@ export async function GET() {
   }
 }
 
+export async function PATCH(request) {
+  if (!isAdmin(request)) return json({ error: 'unauthorized' }, { status: 401 })
+  try {
+    const body = await request.json()
+    const allowed = ['certificateDocuments']
+    const keys = Object.keys(body || {})
+    if (!keys.length) return json({ error: 'No fields supplied' }, { status: 400 })
+    for (const key of keys) if (!allowed.includes(key)) return json({ error: `unsupported field: ${key}` }, { status: 400 })
+
+    const database = await getDb()
+    let doc = await database.collection('site_content').findOne({ id: 'main' })
+    let content = doc?.content || SEED_CONTENT
+    if (!doc || doc.projectCatalogMigration !== MIGRATION) {
+      content = {
+        ...content,
+        categories: RECRUITER_PROJECT_CATEGORIES,
+        projects: RECRUITER_PROJECTS,
+      }
+    }
+
+    const next = { ...content, ...body }
+    await database.collection('site_content').updateOne(
+      { id: 'main' },
+      { $set: { id: 'main', content: next, projectCatalogMigration: MIGRATION, updatedAt: new Date() } },
+      { upsert: true }
+    )
+    return json({ ok: true, content: next, updatedAt: new Date() })
+  } catch (error) {
+    return json({ error: 'Partial save failed', detail: String(error?.message || error) }, { status: 500 })
+  }
+}
+
 export async function PUT(request) {
   if (!isAdmin(request)) return json({ error: 'unauthorized' }, { status: 401 })
   try {

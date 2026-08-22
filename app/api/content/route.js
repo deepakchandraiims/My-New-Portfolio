@@ -39,28 +39,33 @@ function json(body, init) {
   res.headers.set('Cache-Control', 'no-store')
   return res
 }
+async function currentContent(database) {
+  const doc = await database.collection('site_content').findOne({ id: 'main' })
+  let content = doc?.content || SEED_CONTENT
+  if (!doc || doc.projectCatalogMigration !== MIGRATION) {
+    content = {
+      ...content,
+      categories: RECRUITER_PROJECT_CATEGORIES,
+      projects: RECRUITER_PROJECTS,
+    }
+  }
+  return { doc, content }
+}
 
 export async function GET() {
   try {
     const database = await getDb()
-    let doc = await database.collection('site_content').findOne({ id: 'main' })
-    const base = doc?.content || SEED_CONTENT
+    const { doc, content } = await currentContent(database)
 
     if (!doc || doc.projectCatalogMigration !== MIGRATION) {
-      const content = {
-        ...base,
-        categories: RECRUITER_PROJECT_CATEGORIES,
-        projects: RECRUITER_PROJECTS,
-      }
       await database.collection('site_content').updateOne(
         { id: 'main' },
         { $set: { id: 'main', content, projectCatalogMigration: MIGRATION, updatedAt: new Date() } },
         { upsert: true }
       )
-      return json(content)
     }
 
-    return json(doc.content)
+    return json(content)
   } catch (error) {
     return json({ error: 'Content unavailable', detail: String(error?.message || error) }, { status: 500 })
   }
@@ -76,17 +81,9 @@ export async function PATCH(request) {
     for (const key of keys) if (!allowed.includes(key)) return json({ error: `unsupported field: ${key}` }, { status: 400 })
 
     const database = await getDb()
-    let doc = await database.collection('site_content').findOne({ id: 'main' })
-    let content = doc?.content || SEED_CONTENT
-    if (!doc || doc.projectCatalogMigration !== MIGRATION) {
-      content = {
-        ...content,
-        categories: RECRUITER_PROJECT_CATEGORIES,
-        projects: RECRUITER_PROJECTS,
-      }
-    }
-
+    const { content } = await currentContent(database)
     const next = { ...content, ...body }
+
     await database.collection('site_content').updateOne(
       { id: 'main' },
       { $set: { id: 'main', content: next, projectCatalogMigration: MIGRATION, updatedAt: new Date() } },
@@ -102,9 +99,26 @@ export async function PUT(request) {
   if (!isAdmin(request)) return json({ error: 'unauthorized' }, { status: 401 })
   try {
     const body = await request.json()
-    const required = ['owner', 'chapters', 'categories', 'projects', 'skills', 'experience']
-    for (const key of required) if (!(key in body)) return json({ error: `missing key: ${key}` }, { status: 400 })
     const database = await getDb()
+    const required = ['owner', 'chapters', 'categories', 'projects', 'skills', 'experience']
+    const missing = required.filter((key) => !(key in body))
+
+    // Backward-compatible path for the certificate uploader. It may have loaded
+    // a reduced/stale content object, but certificate saves should never require
+    // resubmitting the entire CMS document.
+    if (missing.length && body?.certificateDocuments) {
+      const { content } = await currentContent(database)
+      const next = { ...content, certificateDocuments: body.certificateDocuments }
+      await database.collection('site_content').updateOne(
+        { id: 'main' },
+        { $set: { id: 'main', content: next, projectCatalogMigration: MIGRATION, updatedAt: new Date() } },
+        { upsert: true }
+      )
+      return json({ ok: true, content: next, updatedAt: new Date() })
+    }
+
+    if (missing.length) return json({ error: `missing key: ${missing[0]}` }, { status: 400 })
+
     await database.collection('site_content').updateOne(
       { id: 'main' },
       { $set: { id: 'main', content: body, projectCatalogMigration: MIGRATION, updatedAt: new Date() } },

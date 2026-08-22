@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { ArrowRight, BriefcaseBusiness, CheckCircle2, X } from 'lucide-react'
+import { RECRUITER_PROJECTS } from '@/lib/recruiter-projects'
 
 const CATEGORY_ORDER = [
   'Private Equity',
@@ -49,7 +50,7 @@ function ProjectModal({ project, onClose }) {
 
 export default function ProjectCatalogEnhancer() {
   const [mount, setMount] = useState(null)
-  const [projects, setProjects] = useState([])
+  const [projects, setProjects] = useState(RECRUITER_PROJECTS)
   const [activeCategory, setActiveCategory] = useState('Private Equity')
   const [activeProject, setActiveProject] = useState(null)
 
@@ -64,7 +65,12 @@ export default function ProjectCatalogEnhancer() {
     setMount(node)
     fetch('/api/content', { cache: 'no-store' })
       .then((r) => r.ok ? r.json() : null)
-      .then((data) => { if (!cancelled && Array.isArray(data?.projects)) setProjects(data.projects.filter((p) => !p.hidden)) })
+      .then((data) => {
+        if (cancelled || !Array.isArray(data?.projects)) return
+        const next = data.projects.filter((p) => !p.hidden)
+        const isNewCatalog = CATEGORY_ORDER.every((c) => next.some((p) => p.category === c)) && next.length >= 30
+        if (isNewCatalog) setProjects(next)
+      })
       .catch(() => {})
     return () => {
       cancelled = true

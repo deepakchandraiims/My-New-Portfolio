@@ -6,7 +6,7 @@ import { RECRUITER_PROJECTS, RECRUITER_PROJECT_CATEGORIES } from '@/lib/recruite
 
 export const runtime = 'nodejs'
 
-const MIGRATION = 'recruiter-30-projects-v1'
+const MIGRATION = 'recruiter-30-projects-v2'
 const FALLBACK_HASH = '58f67ecff7dae550c76dc6ea5192ed1475317f655c13232c1151e39bb3708657'
 let client
 let db

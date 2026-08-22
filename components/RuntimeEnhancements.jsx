@@ -3,6 +3,7 @@
 import dynamic from 'next/dynamic'
 import { usePathname } from 'next/navigation'
 import RecruiterBody from '@/components/RecruiterBody'
+import ProjectCatalogEnhancer from '@/components/ProjectCatalogEnhancer'
 import InvestmentLabEnhancement from '@/components/InvestmentLabEnhancement'
 import CertificateGallery from '@/components/CertificateGallery'
 import CertificateThumbnailEnhancer from '@/components/CertificateThumbnailEnhancer'
@@ -33,6 +34,7 @@ export default function RuntimeEnhancements() {
   return (
     <>
       <RecruiterBody />
+      <ProjectCatalogEnhancer />
       <InvestmentLabEnhancement />
       <CertificateGallery />
       <CertificateThumbnailEnhancer />

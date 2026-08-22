@@ -7,6 +7,7 @@ import ProjectCatalogEnhancer from '@/components/ProjectCatalogEnhancer'
 import InvestmentLabEnhancement from '@/components/InvestmentLabEnhancement'
 import CertificateGallery from '@/components/CertificateGallery'
 import CertificateDocumentEnhancer from '@/components/CertificateDocumentEnhancer'
+import ToolLogoEnhancer from '@/components/ToolLogoEnhancer'
 import AdminSectionSync from '@/components/AdminSectionSync'
 
 const DirectSupabaseUploadBridge = dynamic(() => import('@/components/DirectSupabaseUploadBridge'), { ssr: false })
@@ -41,6 +42,7 @@ export default function RuntimeEnhancements() {
       <InvestmentLabEnhancement />
       <CertificateGallery />
       <CertificateDocumentEnhancer />
+      <ToolLogoEnhancer />
     </>
   )
 }

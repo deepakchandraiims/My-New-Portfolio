@@ -33,17 +33,16 @@ export default function AdminProjectVisibility() {
     const syncSlots = () => {
       const targets = [...document.querySelectorAll('aside nav button')]
         .filter((b) => (b.textContent || '').includes('Featured Projects'))
-      let changed = false
       for (const target of targets) {
         if (target.nextElementSibling?.dataset?.projectVisibilitySlot === '1') continue
         const slot = document.createElement('div')
         slot.dataset.projectVisibilitySlot = '1'
         target.insertAdjacentElement('afterend', slot)
-        changed = true
       }
-      if (changed || mounts.length === 0) {
-        setMounts([...document.querySelectorAll('[data-project-visibility-slot="1"]')])
-      }
+      const next = [...document.querySelectorAll('[data-project-visibility-slot="1"]')]
+      setMounts((prev) => (
+        prev.length === next.length && prev.every((node, i) => node === next[i]) ? prev : next
+      ))
     }
     syncSlots()
     const observer = new MutationObserver(syncSlots)
@@ -52,7 +51,6 @@ export default function AdminProjectVisibility() {
       observer.disconnect()
       document.querySelectorAll('[data-project-visibility-slot="1"]').forEach((el) => el.remove())
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const load = async () => {

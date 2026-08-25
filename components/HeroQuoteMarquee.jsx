@@ -36,12 +36,20 @@ export default function HeroQuoteMarquee() {
     const install = () => {
       const top = document.getElementById('top')
       if (!top) return false
-      if (top.querySelector('[data-hero-quote-slot="1"]')) return true
+
+      const existing = document.querySelector('[data-hero-quote-slot="1"]')
+      if (existing) {
+        setMount(existing)
+        return true
+      }
 
       slot = document.createElement('div')
       slot.dataset.heroQuoteSlot = '1'
       slot.className = 'hero-quote-marquee-slot'
-      top.appendChild(slot)
+
+      // Keep the ticker in normal document flow, immediately AFTER the hero.
+      // This prevents it from covering the Trusted Across / hero content.
+      top.insertAdjacentElement('afterend', slot)
       setMount(slot)
       return true
     }
@@ -65,16 +73,16 @@ export default function HeroQuoteMarquee() {
     <>
       <style jsx global>{`
         .hero-quote-marquee-slot {
-          position: absolute;
-          left: 0;
-          right: 0;
-          bottom: 28px;
+          position: relative;
           z-index: 20;
+          width: 100%;
+          margin-top: 18px;
+          margin-bottom: 34px;
         }
         .hq-shell {
           border-top: 1px solid rgba(226,232,240,.95);
           border-bottom: 1px solid rgba(226,232,240,.95);
-          background: rgba(255,255,255,.72);
+          background: rgba(255,255,255,.78);
           backdrop-filter: blur(10px);
           overflow: hidden;
           -webkit-mask-image: linear-gradient(to right, transparent 0, black 6%, black 94%, transparent 100%);
@@ -94,9 +102,8 @@ export default function HeroQuoteMarquee() {
         }
         @media (max-width: 1023px) {
           .hero-quote-marquee-slot {
-            position: relative;
-            inset: auto;
-            margin-top: 28px;
+            margin-top: 12px;
+            margin-bottom: 24px;
           }
           .hq-track { animation-duration: 132s; }
         }

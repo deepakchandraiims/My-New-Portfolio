@@ -88,7 +88,7 @@ function ProjectModal({ project, onClose }) {
 
 export default function ProjectCatalogEnhancer() {
   const [mount, setMount] = useState(null)
-  const [projects, setProjects] = useState(RECRUITER_PROJECTS)
+  const [projects, setProjects] = useState(RECRUITER_PROJECTS.filter((p) => !p.hidden))
   const [activeCategory, setActiveCategory] = useState('Private Equity')
   const [activeProject, setActiveProject] = useState(null)
 
@@ -107,13 +107,11 @@ export default function ProjectCatalogEnhancer() {
       fetch('/api/files', { cache: 'no-store' }).then((r) => r.ok ? r.json() : []).catch(() => []),
     ]).then(([data, files]) => {
       if (cancelled) return
-      let next = RECRUITER_PROJECTS
-      if (Array.isArray(data?.projects)) {
-        const cmsProjects = data.projects.filter((p) => !p.hidden)
-        const isNewCatalog = CATEGORY_ORDER.every((c) => cmsProjects.some((p) => p.category === c)) && cmsProjects.length >= 30
-        if (isNewCatalog) next = cmsProjects
-      }
-      setProjects(enrichProjects(next, files))
+      const savedProjects = Array.isArray(data?.projects) && data.projects.length
+        ? data.projects
+        : RECRUITER_PROJECTS
+      const publishedOnly = savedProjects.filter((p) => !p.hidden)
+      setProjects(enrichProjects(publishedOnly, files))
     })
 
     return () => {
@@ -126,6 +124,11 @@ export default function ProjectCatalogEnhancer() {
   const categories = useMemo(() => CATEGORY_ORDER.filter((c) => projects.some((p) => p.category === c)), [projects])
   const visible = useMemo(() => projects.filter((p) => p.category === activeCategory), [projects, activeCategory])
 
+  useEffect(() => {
+    if (categories.length && !categories.includes(activeCategory)) setActiveCategory(categories[0])
+    if (!categories.length) setActiveProject(null)
+  }, [categories, activeCategory])
+
   if (!mount) return null
   return createPortal(
     <>
@@ -137,32 +140,38 @@ export default function ProjectCatalogEnhancer() {
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-5">
           <div>
             <div className="flex items-center gap-2"><span className="h-7 w-7 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center"><BriefcaseBusiness className="h-3.5 w-3.5 text-blue-600" /></span><h2 className="text-[14px] md:text-[15px] font-semibold uppercase tracking-[.12em] text-slate-700">Institutional Finance Projects</h2></div>
-            <p className="mt-2 text-[11px] text-slate-500">30 projects across six buy-side and advisory disciplines · 5 projects per category</p>
+            <p className="mt-2 text-[11px] text-slate-500">Published institutional work across buy-side and advisory disciplines</p>
           </div>
-          <div className="text-[10px] uppercase tracking-widest text-blue-600">Select a category</div>
+          {categories.length > 0 && <div className="text-[10px] uppercase tracking-widest text-blue-600">Select a category</div>}
         </div>
-        <div className="flex gap-2 overflow-x-auto pb-2 mb-5">
-          {categories.map((c) => <button key={c} onClick={() => setActiveCategory(c)} className={`shrink-0 rounded-full px-3 py-2 text-[10.5px] border transition ${activeCategory === c ? 'bg-blue-600 text-white border-blue-600 shadow-sm' : 'bg-white text-slate-600 border-slate-200 hover:border-blue-200 hover:text-blue-700'}`}>{c}</button>)}
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3">
-          {visible.map((p, idx) => <button key={p.id} onClick={() => setActiveProject(p)} className="text-left rounded-xl border border-slate-200 bg-white hover:border-blue-200 hover:shadow-lg hover:shadow-blue-100/30 transition overflow-hidden group">
-            <div className="h-28 bg-gradient-to-br from-blue-50 to-slate-100 relative flex items-center justify-center overflow-hidden">
-              {p.resolvedCoverImageUrl ? (
-                <img src={p.resolvedCoverImageUrl} alt={`${p.title} thumbnail`} className="absolute inset-0 h-full w-full object-cover object-top transition-transform duration-300 group-hover:scale-[1.02]" />
-              ) : (
-                <div className="text-[48px] font-serif text-blue-900/[.07]">{String(idx + 1).padStart(2, '0')}</div>
-              )}
-              <span className="absolute top-2.5 left-2.5 text-[8.5px] uppercase tracking-widest bg-white/95 border border-blue-100 rounded px-2 py-1 text-blue-700 shadow-sm">{p.category}</span>
-              {(p.projectFiles || []).length > 0 && <span className="absolute bottom-2.5 right-2.5 text-[8.5px] bg-slate-900/80 text-white rounded px-2 py-1">{p.projectFiles.length} file{p.projectFiles.length === 1 ? '' : 's'}</span>}
+        {categories.length > 0 ? (
+          <>
+            <div className="flex gap-2 overflow-x-auto pb-2 mb-5">
+              {categories.map((c) => <button key={c} onClick={() => setActiveCategory(c)} className={`shrink-0 rounded-full px-3 py-2 text-[10.5px] border transition ${activeCategory === c ? 'bg-blue-600 text-white border-blue-600 shadow-sm' : 'bg-white text-slate-600 border-slate-200 hover:border-blue-200 hover:text-blue-700'}`}>{c}</button>)}
             </div>
-            <div className="p-4">
-              <div className="text-[13.5px] font-semibold leading-snug text-slate-900 min-h-[54px]">{p.title}</div>
-              <p className="mt-2 text-[10.5px] leading-relaxed text-slate-500 line-clamp-3">{p.executiveSummary}</p>
-              <div className="mt-3 flex gap-1 flex-wrap">{(p.tools || []).slice(0, 3).map((t) => <span key={t} className="text-[8.5px] px-1.5 py-1 rounded border border-slate-200 bg-slate-50 text-slate-500">{t}</span>)}</div>
-              <div className="mt-4 text-[9.5px] uppercase tracking-widest text-blue-600 flex items-center gap-1">View project <ArrowRight className="h-3 w-3" /></div>
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3">
+              {visible.map((p, idx) => <button key={p.id} onClick={() => setActiveProject(p)} className="text-left rounded-xl border border-slate-200 bg-white hover:border-blue-200 hover:shadow-lg hover:shadow-blue-100/30 transition overflow-hidden group">
+                <div className="h-28 bg-gradient-to-br from-blue-50 to-slate-100 relative flex items-center justify-center overflow-hidden">
+                  {p.resolvedCoverImageUrl ? (
+                    <img src={p.resolvedCoverImageUrl} alt={`${p.title} thumbnail`} className="absolute inset-0 h-full w-full object-cover object-top transition-transform duration-300 group-hover:scale-[1.02]" />
+                  ) : (
+                    <div className="text-[48px] font-serif text-blue-900/[.07]">{String(idx + 1).padStart(2, '0')}</div>
+                  )}
+                  <span className="absolute top-2.5 left-2.5 text-[8.5px] uppercase tracking-widest bg-white/95 border border-blue-100 rounded px-2 py-1 text-blue-700 shadow-sm">{p.category}</span>
+                  {(p.projectFiles || []).length > 0 && <span className="absolute bottom-2.5 right-2.5 text-[8.5px] bg-slate-900/80 text-white rounded px-2 py-1">{p.projectFiles.length} file{p.projectFiles.length === 1 ? '' : 's'}</span>}
+                </div>
+                <div className="p-4">
+                  <div className="text-[13.5px] font-semibold leading-snug text-slate-900 min-h-[54px]">{p.title}</div>
+                  <p className="mt-2 text-[10.5px] leading-relaxed text-slate-500 line-clamp-3">{p.executiveSummary}</p>
+                  <div className="mt-3 flex gap-1 flex-wrap">{(p.tools || []).slice(0, 3).map((t) => <span key={t} className="text-[8.5px] px-1.5 py-1 rounded border border-slate-200 bg-slate-50 text-slate-500">{t}</span>)}</div>
+                  <div className="mt-4 text-[9.5px] uppercase tracking-widest text-blue-600 flex items-center gap-1">View project <ArrowRight className="h-3 w-3" /></div>
+                </div>
+              </button>)}
             </div>
-          </button>)}
-        </div>
+          </>
+        ) : (
+          <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-5 py-10 text-center text-[12px] text-slate-400">No projects are currently published.</div>
+        )}
       </div>
       {activeProject && <ProjectModal project={activeProject} onClose={() => setActiveProject(null)} />}
     </>, mount,

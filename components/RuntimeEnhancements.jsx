@@ -17,6 +17,7 @@ const AdminWorkflowEnhancements = dynamic(() => import('@/components/AdminWorkfl
 const CertificationFileAdminEnhancer = dynamic(() => import('@/components/CertificationFileAdminEnhancer'), { ssr: false })
 const CertificateUploadDrawer = dynamic(() => import('@/components/CertificateUploadDrawer'), { ssr: false })
 const AdminProjectVisibility = dynamic(() => import('@/components/AdminProjectVisibility'), { ssr: false })
+const AdminProjectFileManager = dynamic(() => import('@/components/AdminProjectFileManager'), { ssr: false })
 const PortfolioEnhancements = dynamic(() => import('@/components/PortfolioEnhancements'), { ssr: false })
 const MarketEnhancements = dynamic(() => import('@/components/MarketEnhancements'), { ssr: false })
 
@@ -33,6 +34,7 @@ export default function RuntimeEnhancements() {
         <CertificationFileAdminEnhancer />
         <CertificateUploadDrawer />
         <AdminProjectVisibility />
+        <AdminProjectFileManager />
         <PortfolioEnhancements />
         <MarketEnhancements />
       </>

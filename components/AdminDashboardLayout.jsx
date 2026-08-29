@@ -3,11 +3,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Activity, ArrowRight, BadgeCheck, BarChart3, BookOpen, Briefcase, Building2,
-  CheckCircle2, ChevronDown, Database, Download, ExternalLink, Eye, FolderOpen,
+  BrainCircuit, CheckCircle2, ChevronDown, Database, Download, ExternalLink, Eye, FolderOpen,
   Globe, GraduationCap, Handshake, KeyRound, LayoutDashboard, LineChart, LogOut,
   Menu, MousePointerClick, Quote, Settings, ShieldAlert, Sparkles, Tag, User,
   Users, Wallet, X,
 } from 'lucide-react'
+import AIProjectStudio from '@/components/AIProjectStudio'
 
 const TOKEN_KEY = 'portfolio_admin_token'
 
@@ -41,6 +42,7 @@ const PAGE_TITLES = {
   seo: ['SEO Settings', 'Control search metadata and social preview settings'],
   analytics: ['Analytics', 'Track pageviews, visitors, projects and resume engagement'],
   files: ['Files & Storage', 'Upload and manage project files stored in Supabase'],
+  aiProject: ['AI Project Upload', 'Upload a complete project package, analyze it and publish the finished portfolio entry'],
   danger: ['Settings', 'Administrative and reset controls'],
 }
 
@@ -339,6 +341,7 @@ export default function AdminDashboardLayout({ children }) {
         <SidebarButton active={view === 'owner'} icon={User} label="Hero Profile" onClick={() => navigate('owner')} />
         <SidebarButton active={view === 'chapters'} icon={BookOpen} label="About / Story" onClick={() => navigate('chapters')} />
         <SidebarButton active={view === 'projects'} icon={Briefcase} label="Featured Projects" onClick={() => navigate('projects')} />
+        <SidebarButton active={view === 'aiProject'} icon={BrainCircuit} label="AI Project Upload" onClick={() => navigate('aiProject')} />
         <SidebarButton active={view === 'transactions'} icon={Handshake} label="Transactions" onClick={() => navigate('transactions')} />
 
         <div>
@@ -415,7 +418,9 @@ export default function AdminDashboardLayout({ children }) {
 
             {view === 'dashboard' && <DashboardHome token={token} onNavigate={navigate} onOpenTool={openTool} />}
 
-            <div ref={legacyRef} className={cls('admin-legacy-editor', view === 'dashboard' && 'hidden')}>
+            {view === 'aiProject' && <AIProjectStudio />}
+
+            <div ref={legacyRef} className={cls('admin-legacy-editor', (view === 'dashboard' || view === 'aiProject') && 'hidden')}>
               {children}
             </div>
           </div>

@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import RecruiterBody from '@/components/RecruiterBody'
 import ProjectCatalogEnhancer from '@/components/ProjectCatalogEnhancer'
 import InvestmentLabEnhancement from '@/components/InvestmentLabEnhancement'
+import DecisionForge from '@/components/DecisionForge'
 import CertificateGallery from '@/components/CertificateGallery'
 import CertificateDocumentEnhancer from '@/components/CertificateDocumentEnhancer'
 import ToolLogoEnhancer from '@/components/ToolLogoEnhancer'
@@ -48,6 +49,7 @@ export default function RuntimeEnhancements() {
       <RecruiterBody />
       <ProjectCatalogEnhancer />
       <InvestmentLabEnhancement />
+      <DecisionForge />
       <CertificateGallery />
       <CertificateDocumentEnhancer />
       <ToolLogoEnhancer />

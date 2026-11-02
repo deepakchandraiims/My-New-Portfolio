@@ -145,10 +145,11 @@ function AbilityCard({ owner, open, onClose }) {
   )
 }
 
-function FinanceDoor({ room, index, reveal, hovered, opening, onHover, onOpen }) {
+function FinanceDoor({ room, index, reveal, hovered, opening, onHover, onOpen, unitRef }) {
   const hidden = index === FINANCE_ROOMS.length - 1 && !reveal
   return (
     <li
+      ref={unitRef}
       className={[
         s.unit,
         hidden ? s.secretUnit : '',
@@ -214,7 +215,10 @@ export default function FinanceReferencePortfolio() {
   const [storyIndex, setStoryIndex] = useState(0)
   const [storyProgress, setStoryProgress] = useState(0)
   const [scrollProgress, setScrollProgress] = useState(0)
+  const [doorInfoStyle, setDoorInfoStyle] = useState({})
   const doorsRef = useRef(null)
+  const doorsWallRef = useRef(null)
+  const doorUnits = useRef([])
   const storyRef = useRef(null)
   const storyItems = useRef([])
 
@@ -280,6 +284,63 @@ export default function FinanceReferencePortfolio() {
     window.addEventListener('resize', update)
     return () => { window.removeEventListener('scroll', update); window.removeEventListener('resize', update) }
   }, [])
+
+  useEffect(() => {
+    if (hoveredDoor == null || window.innerWidth < 900) {
+      setDoorInfoStyle({})
+      return
+    }
+
+    let raf = 0
+    const place = () => {
+      const wall = doorsWallRef.current
+      const active = doorUnits.current[hoveredDoor]
+      if (!wall || !active) return
+
+      const visible = doorUnits.current.filter((node) => {
+        if (!node) return false
+        const cs = getComputedStyle(node)
+        return cs.visibility !== 'hidden' && cs.display !== 'none' && Number.parseFloat(cs.opacity || '1') > 0
+      })
+      const vi = visible.indexOf(active)
+      if (vi < 0) return
+
+      const wr = wall.getBoundingClientRect()
+      const ar = active.getBoundingClientRect()
+      const toRight = vi < 2 && visible[vi + 2]
+      const a = toRight ? visible[vi + 1]?.getBoundingClientRect() : (visible[vi - 2] || visible[vi - 1])?.getBoundingClientRect()
+      const b = toRight ? visible[vi + 2]?.getBoundingClientRect() : visible[vi - 1]?.getBoundingClientRect()
+      if (!a || !b) return
+
+      const left = Math.min(a.left, b.left)
+      const right = Math.max(a.right, b.right)
+      const width = Math.min(right - left, 352)
+      const info = wall.querySelector('[data-door-info]')
+      const infoHeight = info?.offsetHeight || 220
+
+      setDoorInfoStyle({
+        width: `${Math.max(260, width)}px`,
+        left: `${left - wr.left + (right - left - Math.max(260, width)) / 2}px`,
+        top: `${ar.top - wr.top + ar.height * 0.5 - infoHeight * 0.5}px`,
+      })
+    }
+
+    const queue = () => {
+      cancelAnimationFrame(raf)
+      raf = requestAnimationFrame(place)
+    }
+
+    queue()
+    const timer = setTimeout(queue, 80)
+    window.addEventListener('resize', queue)
+    window.addEventListener('scroll', queue, { passive: true })
+    return () => {
+      cancelAnimationFrame(raf)
+      clearTimeout(timer)
+      window.removeEventListener('resize', queue)
+      window.removeEventListener('scroll', queue)
+    }
+  }, [hoveredDoor, doorReveal])
 
   useEffect(() => {
     const nodes = storyItems.current.filter(Boolean)
@@ -397,13 +458,13 @@ export default function FinanceReferencePortfolio() {
         <section id="works" ref={doorsRef} className={`${s.doors} ${doorReveal ? s.doorsReveal : ''} ${hoveredDoor != null ? s.doorsFocus : ''}`}>
           <div className={s.doorsTexture} />
           <div className={s.doorsPin}>
-            <div className={`${s.shell} ${s.doorsWall}`}>
+            <div ref={doorsWallRef} className={`${s.shell} ${s.doorsWall}`}>
               <h2 className={s.srOnly}>My work, one door per finance discipline</h2>
               <p className={s.paint}>Capital gets interesting <br />behind the doors</p>
               <p className={s.doorsHint}>Swipe along the wall</p>
-              <div className={`${s.doorInfo} ${activeRoom ? s.doorInfoOn : ''}`}>
+              <div data-door-info className={`${s.doorInfo} ${activeRoom ? s.doorInfoOn : ''}`} style={doorInfoStyle}>
                 <h3>{activeRoom?.label || ''}</h3>
-                <p>{activeRoom?.description || ''}</p>
+                <p>{activeRoom?.tagline || activeRoom?.description || ''}</p>
                 <ul>{activeRoom?.bullets?.slice(0, 5).map((b) => <li key={b}>{b}</li>)}</ul>
               </div>
               <div className={s.doorDots}>{FINANCE_ROOMS.map((r, i) => <i key={r.slug} className={hoveredDoor === i ? s.dotOn : ''} />)}</div>
@@ -418,6 +479,7 @@ export default function FinanceReferencePortfolio() {
                     opening={openingDoor === room.slug}
                     onHover={setHoveredDoor}
                     onOpen={enterRoom}
+                    unitRef={(el) => { doorUnits.current[i] = el }}
                   />
                 ))}
               </ul>

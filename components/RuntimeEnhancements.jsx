@@ -2,15 +2,6 @@
 
 import dynamic from 'next/dynamic'
 import { usePathname } from 'next/navigation'
-import RecruiterBody from '@/components/RecruiterBody'
-import ProjectCatalogEnhancer from '@/components/ProjectCatalogEnhancer'
-import InvestmentLabEnhancement from '@/components/InvestmentLabEnhancement'
-import DecisionForge from '@/components/DecisionForge'
-import CertificateGallery from '@/components/CertificateGallery'
-import CertificateDocumentEnhancer from '@/components/CertificateDocumentEnhancer'
-import ToolLogoEnhancer from '@/components/ToolLogoEnhancer'
-import StaticHeroPortraitEnhancer from '@/components/StaticHeroPortraitEnhancer'
-import HeroQuoteMarquee from '@/components/HeroQuoteMarquee'
 import AdminSectionSync from '@/components/AdminSectionSync'
 
 const DirectSupabaseUploadBridge = dynamic(() => import('@/components/DirectSupabaseUploadBridge'), { ssr: false })
@@ -24,35 +15,19 @@ const MarketEnhancements = dynamic(() => import('@/components/MarketEnhancements
 
 export default function RuntimeEnhancements() {
   const pathname = usePathname()
-  const isAdmin = pathname?.startsWith('/admin')
-
-  if (isAdmin) {
-    return (
-      <>
-        <AdminSectionSync />
-        <DirectSupabaseUploadBridge />
-        <AdminWorkflowEnhancements />
-        <CertificationFileAdminEnhancer />
-        <CertificateUploadDrawer />
-        <AdminProjectVisibility />
-        <AdminProjectFileManager />
-        <PortfolioEnhancements />
-        <MarketEnhancements />
-      </>
-    )
-  }
+  if (!pathname?.startsWith('/admin')) return null
 
   return (
     <>
-      <StaticHeroPortraitEnhancer />
-      <HeroQuoteMarquee />
-      <RecruiterBody />
-      <ProjectCatalogEnhancer />
-      <InvestmentLabEnhancement />
-      <DecisionForge />
-      <CertificateGallery />
-      <CertificateDocumentEnhancer />
-      <ToolLogoEnhancer />
+      <AdminSectionSync />
+      <DirectSupabaseUploadBridge />
+      <AdminWorkflowEnhancements />
+      <CertificationFileAdminEnhancer />
+      <CertificateUploadDrawer />
+      <AdminProjectVisibility />
+      <AdminProjectFileManager />
+      <PortfolioEnhancements />
+      <MarketEnhancements />
     </>
   )
 }

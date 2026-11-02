@@ -269,7 +269,7 @@ export default function FinanceReferencePortfolio() {
         const r = d.getBoundingClientRect()
         const denom = Math.max(1, d.offsetHeight - window.innerHeight)
         const p = Math.max(0, Math.min(1, -r.top / denom))
-        setDoorReveal(p > .47 || window.innerWidth < 900)
+        setDoorReveal(p > .22 || window.innerWidth < 900)
       }
 
       const st = storyRef.current

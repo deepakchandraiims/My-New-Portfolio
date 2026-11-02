@@ -146,7 +146,7 @@ function AbilityCard({ owner, open, onClose }) {
 }
 
 function FinanceDoor({ room, index, reveal, hovered, opening, onHover, onOpen, unitRef }) {
-  const hidden = index === FINANCE_ROOMS.length - 1 && !reveal
+  const hidden = false
   return (
     <li
       ref={unitRef}

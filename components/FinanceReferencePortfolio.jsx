@@ -462,7 +462,7 @@ export default function FinanceReferencePortfolio() {
               <h2 className={s.srOnly}>My work, one door per finance discipline</h2>
               <p className={s.paint}>Capital gets interesting <br />behind the doors</p>
               <p className={s.doorsHint}>Swipe along the wall</p>
-              <div data-door-info className={`${s.doorInfo} ${activeRoom ? s.doorInfoOn : ''}`} style={doorInfoStyle}>
+              <div data-door-info className={`${s.doorInfo} ${activeRoom && doorInfoStyle.left ? s.doorInfoOn : ''}`} style={doorInfoStyle}>
                 <h3>{activeRoom?.label || ''}</h3>
                 <p>{activeRoom?.tagline || activeRoom?.description || ''}</p>
                 <ul>{activeRoom?.bullets?.slice(0, 5).map((b) => <li key={b}>{b}</li>)}</ul>

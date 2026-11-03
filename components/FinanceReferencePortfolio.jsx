@@ -7,6 +7,7 @@ import { SEED_CONTENT } from '@/lib/portfolio-data'
 import { FINANCE_ROOMS, cleanOwner, cleanStory, roomForProject, yearFromPeriod } from '@/lib/finance-site-map'
 import s from './FinanceReferencePortfolio.module.css'
 import PortfolioShowcaseSections from '@/components/PortfolioShowcaseSections'
+import PortfolioTruthSections from '@/components/PortfolioTruthSections'
 
 function RollingYear({ year }) {
   const digits = String(year || '2026').padStart(4, '0').slice(0, 4).split('')
@@ -137,7 +138,7 @@ function AbilityCard({ owner, open, onClose }) {
         <div className={s.abilityRule} />
         <div className={s.abilityGrid}>
           <div><span>Core</span><b>M&A · Strategic Finance · Modelling</b></div>
-          <div><span>Investing</span><b>Private Equity · Credit · Special Situations</b></div>
+          <div><span>Career direction</span><b>Private Markets · M&A · Special Situations</b></div>
           <div><span>Location</span><b>{owner.location}</b></div>
           <div><span>Approach</span><b>Evidence first. Downside before upside.</b></div>
         </div>
@@ -388,12 +389,12 @@ export default function FinanceReferencePortfolio() {
             <button className={s.brand} onClick={() => go('home')}>DC</button>
             <nav className={s.nav}>
               <button onClick={() => go('home')}>Home</button>
-              {FINANCE_ROOMS.slice(0, 5).map((r) => <button key={r.slug} onClick={() => router.push(`/work/${r.slug}`)}>{r.label}</button>)}
-              <button onClick={() => go('about')}>My story</button>
+              <button onClick={() => go('flagship-work')}>Selected Work</button>
+              <button onClick={() => go('works')}>Work Library</button>
               <button onClick={() => router.push('/investment-lab')}>Investment Lab</button>
-              <button onClick={() => go('skills')}>Skills</button>
+              <button onClick={() => go('about')}>My Story</button>
               <button onClick={() => go('tools')}>Tools</button>
-              <button onClick={() => go('certificates')}>Certificates</button>
+              <button onClick={() => go('certificates')}>Credentials</button>
               <button onClick={() => go('contact-footer')}>Contact</button>
             </nav>
             <div className={s.headerRight}>
@@ -412,14 +413,15 @@ export default function FinanceReferencePortfolio() {
         <div className={s.mobileMenu}>
           <div className={s.mobileMenuTop}><strong>Deepak Chandra</strong><button onClick={() => setMenu(false)}><X size={18} /></button></div>
           <div className={s.mobileMenuLinks}>
-            <button onClick={() => go('home')}>Home</button>
-            {FINANCE_ROOMS.map((r, i) => <button key={r.slug} onClick={() => router.push(`/work/${r.slug}`)}><span>0{i + 1}</span>{r.label}</button>)}
-            <button onClick={() => go('about')}><span>06</span>My story</button>
-            <button onClick={() => router.push('/investment-lab')}><span>07</span>Investment Lab</button>
-            <button onClick={() => go('skills')}><span>08</span>Skills</button>
-            <button onClick={() => go('tools')}><span>09</span>Tools</button>
-            <button onClick={() => go('certificates')}><span>10</span>Certificates</button>
-            <button onClick={() => go('contact-footer')}><span>11</span>Contact</button>
+            <button onClick={() => go('home')}><span>01</span>Home</button>
+            <button onClick={() => go('flagship-work')}><span>02</span>Selected Work</button>
+            <button onClick={() => go('works')}><span>03</span>Work Library</button>
+            <button onClick={() => router.push('/investment-lab')}><span>04</span>Investment Lab</button>
+            <button onClick={() => go('skills')}><span>05</span>Skills</button>
+            <button onClick={() => go('tools')}><span>06</span>Tools</button>
+            <button onClick={() => go('certificates')}><span>07</span>Credentials</button>
+            <button onClick={() => go('about')}><span>08</span>My Story</button>
+            <button onClick={() => go('contact-footer')}><span>09</span>Contact</button>
           </div>
         </div>
       )}
@@ -444,25 +446,27 @@ export default function FinanceReferencePortfolio() {
 
           <div className={`${s.shell} ${s.heroContent}`}>
             <div className={s.heroLeft}>
-              <p className={s.eyebrow}>Finance professional</p>
+              <p className={s.eyebrow}>Deepak Chandra · Strategic Finance &amp; M&amp;A</p>
               <h1 className={s.heroTitle}>
-                <span>Hi, I&apos;m {owner.name?.split(' ')[0] || 'Deepak'}.</span>
-                <span className={s.soft}>I work in</span>
-                <RoleCalendar index={role} />
+                <span>I build the analysis</span>
+                <span className={s.soft}>behind capital decisions.</span>
               </h1>
+              <p className={s.heroSummary}>Assistant Manager in Strategic Finance, working on M&amp;A target sourcing and evaluation, financial analysis, strategic initiatives and investment-style research — while building toward a career in private markets.</p>
               <div className={s.ctas}>
-                {owner.email ? <a className={s.pillDark} href={`mailto:${owner.email}`}>Start a conversation <b><ArrowRight size={15} /></b></a> : <button className={s.pillDark} onClick={() => go('contact-footer')}>Start a conversation <b><ArrowRight size={15} /></b></button>}
-                <button className={s.pillOutline} onClick={() => go('works')}>See my work</button>
+                <button className={s.pillDark} onClick={() => go('flagship-work')}>Explore selected work <b><ArrowRight size={15} /></b></button>
+                <button className={s.pillOutline} onClick={() => router.push('/investment-lab')}>Investment Lab</button>
               </div>
             </div>
           </div>
 
           <div className={`${s.shell} ${s.heroBar}`}>
-            <span>Strategic finance &amp; M&amp;A</span>
-            <span className={s.mid}>Delhi NCR · India</span>
-            <span>Scroll to explore <i>↓</i></span>
+            <span>Strategic Finance &amp; M&amp;A</span>
+            <span className={s.mid}>IIM Sambalpur · Finance &amp; Strategy</span>
+            <span>Private-markets oriented <i>↓</i></span>
           </div>
         </section>
+
+        <PortfolioTruthSections onNavigate={(path) => router.push(path)} />
 
         <section id="works" ref={doorsRef} className={`${s.doors} ${doorReveal ? s.doorsReveal : ''} ${hoveredDoor != null ? s.doorsFocus : ''}`}>
           <div className={s.doorsTexture} />
@@ -496,6 +500,8 @@ export default function FinanceReferencePortfolio() {
             <div className={s.doorsFloor} />
           </div>
         </section>
+
+        <PortfolioShowcaseSections />
 
         <section id="about" ref={storyRef} className={s.story}>
           <div className={s.storyAmbient}>{Array.from({ length: 5 }, (_, i) => <i key={i} />)}</div>
@@ -537,8 +543,6 @@ export default function FinanceReferencePortfolio() {
             </div>
           </div>
         </section>
-
-        <PortfolioShowcaseSections />
       </main>
 
       <div className={s.footerWrap}>

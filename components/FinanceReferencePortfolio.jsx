@@ -391,6 +391,9 @@ export default function FinanceReferencePortfolio() {
               {FINANCE_ROOMS.slice(0, 5).map((r) => <button key={r.slug} onClick={() => router.push(`/work/${r.slug}`)}>{r.label}</button>)}
               <button onClick={() => go('about')}>My story</button>
               <button onClick={() => router.push('/investment-lab')}>Investment Lab</button>
+              <button onClick={() => go('skills')}>Skills</button>
+              <button onClick={() => go('tools')}>Tools</button>
+              <button onClick={() => go('certificates')}>Certificates</button>
               <button onClick={() => go('contact-footer')}>Contact</button>
             </nav>
             <div className={s.headerRight}>

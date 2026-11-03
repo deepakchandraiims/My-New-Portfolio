@@ -6,6 +6,7 @@ import { ArrowDown, ArrowRight, ArrowUp, ArrowUpRight, Download, Mail, Menu, X }
 import { SEED_CONTENT } from '@/lib/portfolio-data'
 import { FINANCE_ROOMS, cleanOwner, cleanStory, roomForProject, yearFromPeriod } from '@/lib/finance-site-map'
 import s from './FinanceReferencePortfolio.module.css'
+import PortfolioShowcaseSections from '@/components/PortfolioShowcaseSections'
 
 function RollingYear({ year }) {
   const digits = String(year || '2026').padStart(4, '0').slice(0, 4).split('')
@@ -389,6 +390,7 @@ export default function FinanceReferencePortfolio() {
               <button onClick={() => go('home')}>Home</button>
               {FINANCE_ROOMS.slice(0, 5).map((r) => <button key={r.slug} onClick={() => router.push(`/work/${r.slug}`)}>{r.label}</button>)}
               <button onClick={() => go('about')}>My story</button>
+              <button onClick={() => router.push('/investment-lab')}>Investment Lab</button>
               <button onClick={() => go('contact-footer')}>Contact</button>
             </nav>
             <div className={s.headerRight}>
@@ -410,7 +412,11 @@ export default function FinanceReferencePortfolio() {
             <button onClick={() => go('home')}>Home</button>
             {FINANCE_ROOMS.map((r, i) => <button key={r.slug} onClick={() => router.push(`/work/${r.slug}`)}><span>0{i + 1}</span>{r.label}</button>)}
             <button onClick={() => go('about')}><span>06</span>My story</button>
-            <button onClick={() => go('contact-footer')}><span>07</span>Contact</button>
+            <button onClick={() => router.push('/investment-lab')}><span>07</span>Investment Lab</button>
+            <button onClick={() => go('skills')}><span>08</span>Skills</button>
+            <button onClick={() => go('tools')}><span>09</span>Tools</button>
+            <button onClick={() => go('certificates')}><span>10</span>Certificates</button>
+            <button onClick={() => go('contact-footer')}><span>11</span>Contact</button>
           </div>
         </div>
       )}
@@ -528,6 +534,8 @@ export default function FinanceReferencePortfolio() {
             </div>
           </div>
         </section>
+
+        <PortfolioShowcaseSections />
       </main>
 
       <div className={s.footerWrap}>
@@ -542,7 +550,7 @@ export default function FinanceReferencePortfolio() {
             </div>
             <div className={s.footerCols}>
               <div><h3>Work</h3><ul>{FINANCE_ROOMS.map((r) => <li key={r.slug}><button onClick={() => router.push(`/work/${r.slug}`)}>{r.label}</button></li>)}</ul></div>
-              <div><h3>Navigate</h3><ul><li><button onClick={() => go('home')}>Home</button></li><li><button onClick={() => go('about')}>My story</button></li><li>{owner.linkedin ? <a href={owner.linkedin} target="_blank" rel="noreferrer">LinkedIn</a> : <span>LinkedIn</span>}</li></ul></div>
+              <div><h3>Navigate</h3><ul><li><button onClick={() => go('home')}>Home</button></li><li><button onClick={() => go('about')}>My story</button></li><li><button onClick={() => router.push('/investment-lab')}>Investment Lab</button></li><li><button onClick={() => go('skills')}>Skills & tools</button></li><li><button onClick={() => go('certificates')}>Certificates</button></li><li>{owner.linkedin ? <a href={owner.linkedin} target="_blank" rel="noreferrer">LinkedIn</a> : <span>LinkedIn</span>}</li></ul></div>
               <div><h3>Status</h3><ul><li className={s.status}>Focused on finance</li><li className={s.status}>{owner.location}</li><li className={s.status}>Local time {time}</li></ul></div>
             </div>
             <div className={s.footerBottom}>

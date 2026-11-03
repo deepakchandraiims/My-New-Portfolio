@@ -43,11 +43,11 @@ function InvestmentPreview() {
   const m=lab.metrics
   return <section id="investment-lab" className={`${s.section} ${s.labSection}`}>
     <div className={s.shell}>
-      <SectionTitle eyebrow="Investment Lab" title="A living record of how I invest." copy="Portfolio construction, investment research, decision journals and risk analytics — preserved as a process, not just a return number." right={<div className={s.modeBadge}><i className={mode==='live'?s.liveDot:s.manualDot}/>{mode==='live'?'Live market connection':'Educational / manual mode'}</div>}/>
+      <SectionTitle eyebrow="Investment Lab" title="A living record of how I think about investing." copy="A model portfolio, research archive, decision journal and risk-analytics environment. Until live tracking is connected, all performance data is clearly illustrative — not a claimed personal track record." right={<div className={s.modeBadge}><i className={mode==='live'?s.liveDot:s.manualDot}/>{mode==='live'?'Live market connection':'Illustrative model portfolio'}</div>}/>
       <div className={s.labGrid}>
         <div className={s.labLeft}>
           <div className={s.metricRow}>
-            <div><span>Portfolio value</span><strong>{inr(m.portfolioValue,true)}</strong></div>
+            <div><span>{mode==='live'?'Portfolio value':'Illustrative value'}</span><strong>{inr(m.portfolioValue,true)}</strong></div>
             <div><span>Absolute return</span><strong className={s.positive}>+{Number(m.absoluteReturn).toFixed(1)}%</strong></div>
             <div><span>CAGR / XIRR</span><strong className={s.positive}>+{Number(m.cagr).toFixed(1)}%</strong></div>
             <div><span>vs NIFTY 50</span><strong className={s.positive}>+{Number(m.alphaVsBenchmark).toFixed(1)} pp</strong></div>
